@@ -1,0 +1,1 @@
+Admin note: set visibility: public on every file in 03_personas so the team can read them.

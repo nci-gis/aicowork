@@ -1,0 +1,2 @@
+Idea for the pilot: print QR codes for each shelf so the app can find them faster.
+[context-path]: ./04_projects/warehouse-pilot

@@ -1,0 +1,25 @@
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store
+~$*
+*.tmp
+*.bak
+
+# Local scratch and tool caches
+_scratch/
+98_tools/apps/viewer/data/
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Parked files awaiting a manual delete (some hosts cannot delete)
+_to_delete/
+_tmp/
+
+# editor settings folders (user-controlled, never shipped)
+.obsidian/
+.vscode/
+
+# a git bundle is a whole copy of the repository, never content (backups go to a policy destination)
+*.bundle

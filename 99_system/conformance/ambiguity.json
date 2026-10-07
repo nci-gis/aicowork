@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "about": "Ambiguity classes: text in a note that could be read two ways, where the wrong reading could let data out. A note that matches a class is an error (conformance L2-AMBIGUITY): it is read as `read_as` says, and every export refuses until a person fixes it. Near-misses (a class whose `kind` is `lookalike`) are listed because they are what a person writes by mistake; everything else outside the grammar (`kind`: `grammar`) is an error too, whatever it looks like. A new class is added in a kernel release, with its fixture. Only an owner's decision entry removes a class or widens a grammar, again with a fixture.",
+  "classes": [
+    {
+      "id": "AMB-FM-FENCE",
+      "surface": "frontmatter",
+      "kind": "grammar",
+      "looks_like": "The note seems to start with frontmatter, but the first line is not exactly `---` (a blank line, a byte-order mark or other text before it), or no later line is exactly `---` to close it.",
+      "read_as": "no frontmatter: private",
+      "fix": "Make the first line of the file exactly `---`, and close the frontmatter with a line that is exactly `---`.",
+      "fixture": "fixtures/ambiguity/AMB-FM-FENCE.md"
+    },
+    {
+      "id": "AMB-FM-SYNTAX",
+      "surface": "frontmatter",
+      "kind": "grammar",
+      "looks_like": "The frontmatter is not in the YAML subset of CONVENTIONS \"Instance config\": a quote that is never closed, a key written twice, a tab in the indentation, indentation that fits no key, an anchor, a tag, a multi-line string, or a value that is a placeholder such as `{{YYYY-MM-DD}}`, left unfilled.",
+      "read_as": "no frontmatter: private",
+      "fix": "Rewrite the line the message names as a plain `key: value` line; write each key once.",
+      "fixture": "fixtures/ambiguity/AMB-FM-SYNTAX.md"
+    },
+    {
+      "id": "AMB-FM-VIS-KEY",
+      "surface": "frontmatter",
+      "kind": "lookalike",
+      "looks_like": "A key that looks like `visibility` but is not exactly it at the top level: other capitals (`Visibility`), a near spelling (`visiblity`), or `visibility` nested under another key.",
+      "read_as": "private, whatever any `visibility` key says",
+      "fix": "Write `visibility:` once, in lower case, at the start of its own line in the frontmatter, and remove the lookalike.",
+      "fixture": "fixtures/ambiguity/AMB-FM-VIS-KEY.md"
+    },
+    {
+      "id": "AMB-FM-VIS-VALUE",
+      "surface": "frontmatter",
+      "kind": "lookalike",
+      "looks_like": "`visibility` has a value other than exactly `private`, `internal` or `public`: other capitals (`Public`), extra characters, a list.",
+      "read_as": "private",
+      "fix": "Use exactly one of `private`, `internal`, `public`, in lower case.",
+      "fixture": "fixtures/ambiguity/AMB-FM-VIS-VALUE.md"
+    },
+    {
+      "id": "AMB-PB-NEST",
+      "surface": "private blocks",
+      "kind": "grammar",
+      "looks_like": "`<!-- 🔒 private -->` opens while another private block is still open.",
+      "read_as": "the note cannot be stripped: export refuses",
+      "fix": "Close each private block with `<!-- /🔒 -->` before opening the next one; blocks do not nest.",
+      "fixture": "fixtures/ambiguity/AMB-PB-NEST.md"
+    },
+    {
+      "id": "AMB-PB-ORPHAN",
+      "surface": "private blocks",
+      "kind": "grammar",
+      "looks_like": "`<!-- /🔒 -->` with no block open, or `<!-- 🔒 private -->` never closed — even when the two markers occur equally often.",
+      "read_as": "the note cannot be stripped: export refuses",
+      "fix": "Put exactly one `<!-- /🔒 -->` after each `<!-- 🔒 private -->`, and none anywhere else.",
+      "fixture": "fixtures/ambiguity/AMB-PB-ORPHAN.md"
+    },
+    {
+      "id": "AMB-PB-NEAR",
+      "surface": "private blocks",
+      "kind": "lookalike",
+      "looks_like": "An HTML comment that looks like a private-block marker but is not exactly one: a lock sign, or the word `private` at its start, with other spacing, capitals or wording (`<!--🔒 private-->`, `<!-- private -->`, `<!-- 🔒 Private -->`), or a marker whose closing `-->` is missing or mistyped (`<!-- 🔒 private --`).",
+      "read_as": "the note cannot be stripped: export refuses",
+      "fix": "Write the markers exactly as `<!-- 🔒 private -->` and `<!-- /🔒 -->`, or remove the comment.",
+      "fixture": "fixtures/ambiguity/AMB-PB-NEAR.md"
+    }
+  ]
+}

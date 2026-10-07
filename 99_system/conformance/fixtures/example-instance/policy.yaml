@@ -1,0 +1,21 @@
+schema: 1
+preset: personal-simple
+decided: 2026-10-01
+distribution: controlled
+
+never_export: []
+destinations:
+  - id: local-backup
+    kind: backup
+    path: ../example-backups
+    accepts: all
+    below: drop
+  - id: share-public
+    kind: export
+    path: ../example-export
+    accepts: public
+    below: drop
+ai_surfaces:
+  - id: default-agent
+    max_visibility: private
+remotes: []

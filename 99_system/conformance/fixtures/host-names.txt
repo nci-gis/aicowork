@@ -1,0 +1,21 @@
+# Host, IDE, model and provider names that kernel-ring files must not contain (L2-HOST-NAMES).
+# One regular expression per line, matched case-insensitively. A fixture, so the suite itself names no host.
+device_[a-z_]+
+\$HOME/mnt
+/sessions/[^/\s]+/mnt
+\bClaude\b
+CLAUDE\.md
+AGENTS\.md
+(?<!AI-)\bCowork\b
+\bCursor\b
+\bCodex\b
+\bCopilot\b
+\bGemini\b
+\bOpenAI\b
+\bAnthropic\b
+\bOllama\b
+\bVS ?Code\b
+\bObsidian\b
+\.obsidian/
+\.vscode/
+\.claude/

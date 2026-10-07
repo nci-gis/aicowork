@@ -1,0 +1,14 @@
+schema: 1
+kernel_version: 0.0.1-rc.4
+language:
+  chat: [en]
+  content: en
+  ui: en
+  modules:
+    99_system: en
+    templates: en
+modules: [7habits]
+server: {host: 127.0.0.1, port: 8765}
+security:
+  preset: personal-simple
+  policy: policy.yaml

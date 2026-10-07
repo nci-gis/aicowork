@@ -1,0 +1,28 @@
+# One uv workspace for every Python tool in 98_tools/: one uv.lock, one .venv here.
+# The launchers run `uv run --locked --project 98_tools --package aicowork …` (the command
+# line only); `aicowork viz` and `aicowork verify` use the whole environment when they need it.
+# 90_devkit/ is deliberately NOT a member: it never ships, and an instance without it
+# must still pass `--locked`. It runs from its source with this environment's Python.
+[project]
+name = "aicowork-tools"
+version = "0.0.1rc4"
+description = "AI-Cowork reference tools (workspace root; no code of its own)"
+requires-python = ">=3.11"
+dependencies = ["aicowork[seal]", "aicowork-viewer"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["libs/*", "apps/*"]
+
+[tool.uv.sources]
+aicowork-core = { workspace = true }
+aicowork = { workspace = true }
+aicowork-viewer = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1,<0.29",
+    "pytest>=9.1.1,<10",
+]

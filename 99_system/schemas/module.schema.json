@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aicowork/module.schema.json",
+  "title": "AI-Cowork module manifest (module.yaml)",
+  "description": "Kernel 0.0.1. A module is prose, templates and declarative checks — never executable code. The Framework Adoption Contract caps fields at 2, signal at 1, prompt at 1.",
+  "type": "object",
+  "required": ["name", "version", "language", "description", "provides", "permissions"],
+  "properties": {
+    "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "must equal the folder name"},
+    "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "language": {"type": "string", "pattern": "^[a-z]{2}$"},
+    "description": {"type": "string"},
+    "provides": {
+      "type": "object",
+      "properties": {
+        "templates": {"type": "array", "items": {"type": "string"}},
+        "template_fragments": {"type": "boolean"},
+        "skills": {"type": "array", "items": {"type": "string"}},
+        "fields": {"type": "array", "items": {"type": "string"}, "maxItems": 2},
+        "signal": {"type": ["string", "null"]},
+        "prompt": {"enum": ["daily", "weekly", null]},
+        "lint_rules": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "permissions": {
+      "type": "object",
+      "required": ["read", "write"],
+      "properties": {
+        "read": {"type": "array", "items": {"type": "string"}},
+        "write": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

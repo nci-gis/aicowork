@@ -1,0 +1,62 @@
+#!/bin/sh
+# AI-Cowork pre-commit (reference implementation). Enable once per clone:
+#   git config core.hooksPath .githooks
+# Instance: runs the fast gate only when the kernel, host pages or tools change, so
+# everyday content commits (triage:, log:) are never slowed down or blocked. With no
+# Python, or no tools (an instance initialised without 98_tools/), it warns and lets
+# the commit through: the host-side `aicowork audit` catches what this would.
+# Development repository (no aicowork.yaml): every commit is leak-scanned by the
+# devkit, and nothing goes through unchecked (fail closed).
+# Order matters: everything this hook adds to the commit (the ring manifests) is
+# added BEFORE the leak scan, so the scan reads exactly what the commit holds.
+dev=""; [ -f aicowork.yaml ] || dev=1
+changed=$(git diff --cached --name-only -- 99_system hosts 98_tools 2>/dev/null)
+[ -z "$changed" ] && [ -z "$dev" ] && exit 0
+APP=98_tools/apps/aicowork/src
+if [ ! -d "$APP" ]; then
+  [ -n "$dev" ] && { echo "pre-commit: 98_tools/ missing — refusing (development repository)" >&2; exit 1; }
+  echo "pre-commit: no tools in this instance — kernel/host change NOT verified (files-only path; review it yourself)" >&2
+  exit 0
+fi
+# a Python the tools accept: the floor is written once (98_tools/pyproject.toml) and
+# checked by pyfloor.py, so no version number is repeated here
+FLOOR=98_tools/libs/core/src/aicowork_core/pyfloor.py
+PY=""; why="no Python found"
+for c in 98_tools/.venv/Scripts/python.exe 98_tools/.venv/bin/python python3 python; do
+  # must actually run here: a Windows venv is "executable" on a mounted folder but not in a Linux VM
+  out=$("$c" "$FLOOR" 2>&1) && { PY="$c"; break; }
+  case "$out" in Python*) why="$out" ;; esac
+done
+if [ -z "$PY" ] && command -v uv >/dev/null 2>&1; then
+  c=$(uv python find --directory 98_tools 2>/dev/null) && "$c" "$FLOOR" >/dev/null 2>&1 && PY="$c"
+fi
+if [ -z "$PY" ]; then
+  [ -n "$dev" ] && { echo "pre-commit: $why — the leak scan cannot run; refusing (development repository)" >&2; exit 1; }
+  echo "pre-commit: $why — kernel/tools change NOT verified; run 'aicowork verify' host-side" >&2
+  exit 0
+fi
+if [ -n "$changed" ]; then
+  # a ring manifest lists the files on disk: an untracked one would be named in a
+  # commit that does not hold it
+  loose=$(git ls-files --others --exclude-standard -- 99_system hosts 98_tools 2>/dev/null)
+  if [ -n "$loose" ]; then
+    echo "pre-commit: untracked files in the kernel, host pages or tools — add them or remove them:" >&2
+    echo "$loose" | sed 's/^/  /' >&2
+    exit 1
+  fi
+  PYTHONPATH=$APP "$PY" -m aicowork manifest --write >/dev/null || exit 1
+  git add 99_system/MANIFEST.sha256 hosts/MANIFEST.sha256 98_tools/MANIFEST.sha256 2>/dev/null
+fi
+if [ -n "$dev" ]; then
+  # every commit of the development repository must already be publishable: the scan
+  # reads the index (what this commit holds, manifests included), not the working tree
+  PYTHONPATH=90_devkit/src "$PY" -m devkit leakscan --base . || {
+    echo "pre-commit: leak scan failed — remove the names above (the repository never holds owner data)" >&2
+    exit 1
+  }
+  [ -z "$changed" ] && exit 0
+fi
+PYTHONPATH=$APP "$PY" -m aicowork verify --fast --allow-instance || {
+  echo "pre-commit: verify failed — fix the findings above (or commit with the owner's explicit --no-verify)" >&2
+  exit 1
+}

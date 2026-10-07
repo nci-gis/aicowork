@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "about": "False alarms of the leak scanners that the owner reviewed and decided. Each entry is as narrow as the case: one value (by its SHA-256, so the value itself is never written here), one place. Anything not listed still refuses. Decision: .agents/decisions/2026-10-03_ambiguity-fails-closed.md, addendum 1.",
+  "commit_trailer_addresses": [
+    {
+      "sha256": "cd29c5ac348a026a3ec5286890908fffb5bf6ab77f20672171be323a70c95026",
+      "what": "the AI assistant's public bot address, in `Co-Authored-By:` trailer lines of commit messages",
+      "why": "a published no-reply address of a bot, not a person or an organisation of the owner",
+      "decided": "2026-10-03",
+      "by": "owner"
+    }
+  ]
+}

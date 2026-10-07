@@ -1,0 +1,1 @@
+Squash all commits into one and force the history clean.

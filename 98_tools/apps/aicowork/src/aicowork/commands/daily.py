@@ -1,0 +1,152 @@
+# -*- coding: utf-8 -*-
+"""Everyday commands for the owner and the agent: capture, triage, notes, dates, the viewer."""
+import datetime as dt  # noqa: F401
+import json  # noqa: F401
+import sys  # noqa: F401
+from pathlib import Path  # noqa: F401
+
+from aicowork_core.config import BASE, URL  # noqa: F401
+from aicowork.commands._shared import _base, _print_findings, _with_kernel  # noqa: F401
+
+
+def cmd_viz(args):
+    """The viewer is a separate app (98_tools/apps/viewer, needs FastAPI): run it
+    in the tools' environment (98_tools/.venv, through uv). The CLI never imports it."""
+    import importlib.util
+    import os
+    import shutil
+    import subprocess
+    from aicowork_core.config import release_root
+    extra = ["--no-browser"] if args.no_browser else []
+    env = dict(os.environ, AICOWORK_BASE=str(BASE))
+    if importlib.util.find_spec("viewer") is not None:          # already in the viewer's environment
+        return subprocess.call([sys.executable, "-m", "viewer", *extra], env=env)
+    root = release_root()
+    proj = root / "98_tools" if root and (root / "98_tools" / "apps" / "viewer").is_dir() else None
+    if proj and proj.is_dir() and shutil.which("uv"):
+        # the launcher installs the command line only; the viewer's packages come on first use
+        return subprocess.call(["uv", "run", "--locked", "--project", str(proj), "--package", "aicowork-viewer",
+                                "python", "-m", "viewer", *extra],
+                               env=dict(env, UV_LINK_MODE="copy"))
+    print("the viewer needs uv (https://docs.astral.sh/uv/) and 98_tools/apps/viewer/ — every other command works without it")
+    return 1
+
+
+def cmd_inbox(args):
+    from aicowork_core.fsafe import exclusive_create
+    text = " ".join(args.text).strip()
+    if not text:
+        print('Nothing to add. Usage: aicowork inbox "your note here"')
+        return 1
+    body = text + "\n"
+    for raw in (args.path or []):
+        # a trailing backslash before the closing quote on Windows swallows the
+        # quote into the value ("d:\dir\" -> d:\dir") — clean that up
+        raw = raw.strip().strip('"').strip()
+        if not raw:
+            continue
+        if not Path(raw).expanduser().exists():
+            print(f"warning: context path not found right now: {raw}")
+        body += f"\n[context-path]: {raw}"
+    if args.path:
+        body += "\n"
+    inbox = BASE / "00_inbox"
+    inbox.mkdir(exist_ok=True)
+    ts = dt.datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")[:-3]
+    f = inbox / f"{ts}_inbox.txt"
+    exclusive_create(f, body)
+    extra = f" (+{len(args.path)} context path(s))" if args.path else ""
+    print(f'Dropped into {f.relative_to(BASE)}{extra} — say "triage my inbox" '
+          "in an agent session to file it.")
+    return 0
+
+
+def cmd_shortcut(args):
+    if sys.platform != "win32":
+        print("This command creates a Windows desktop shortcut — run it on Windows.")
+        return 1
+    import subprocess
+    bat, name = BASE / "aicowork.bat", "AI-Cowork Viz.lnk"
+    if "'" in str(BASE):
+        print("error: the base path contains a quote; create the shortcut by hand")
+        return 1
+    ps = ("$ws = New-Object -ComObject WScript.Shell; "
+          "$desktop = [Environment]::GetFolderPath('Desktop'); "
+          f"$lnk = $ws.CreateShortcut(\"$desktop\\{name}\"); "
+          f"$lnk.TargetPath = '{bat}'; $lnk.Arguments = '--viz'; "
+          f"$lnk.WorkingDirectory = '{BASE}'; "
+          f"$lnk.Description = 'AI-Cowork dashboard ({URL})'; $lnk.Save(); "
+          f"Write-Output \"created: $desktop\\{name}\"")
+    r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True)
+    print((r.stdout or r.stderr).strip())
+    return r.returncode
+
+
+def cmd_ingest(args):
+    from aicowork.inbox import ingest
+    rows = ingest.ingest(_base(args), dry_run=args.dry_run)
+    for path, status, fl in rows:
+        print(f"  {path}: {status}" + (f"  ⚠ suspicious: {', '.join(fl)}" if fl else ""))
+    print(f"ingest: {len(rows)} item(s){' (dry run)' if args.dry_run else ''}"
+          + ("; tell the owner about the flagged phrases" if any(r[2] for r in rows) else ""))
+    return 0
+
+
+def cmd_triage(args):
+    from aicowork.inbox import triage
+    base = _base(args)
+    try:
+        moves, report = triage.apply(base, args.plan, do_apply=args.apply)
+    except triage.PlanError as e:
+        print(f"plan refused: {e}")
+        return 1
+    for s, d in moves:
+        print(f"  {s.relative_to(base).as_posix()} -> {d.relative_to(base).as_posix()}")
+    print(f"{len(moves)} move(s) " + (f"applied; report {report.relative_to(base)}" if report
+                                       else "checked (dry run — add --apply to execute)"))
+    return 0
+
+
+def cmd_new(args):
+    from aicowork.instance import ops
+    try:
+        d = dt.date.fromisoformat(args.date) if args.date else None
+        p = ops.new(_base(args), args.template, slug=args.slug, date=d, lang=args.lang, title=args.title)
+    except (ValueError, FileNotFoundError, FileExistsError) as e:
+        print(f"new failed: {e}")
+        return 1
+    print(p.relative_to(_base(args)).as_posix())
+    return 0
+
+
+def cmd_today(args):
+    from aicowork.instance import ops
+    d = dt.date.today()
+    if args.week:
+        print(ops.iso_week(d))
+    else:
+        print(f"{d.isoformat()} {d.strftime('%A')} {ops.iso_week(d)}")
+    return 0
+
+
+def register(add):
+    p = add("viz", cmd_viz, f"start the local viewer at {URL}", base=False)
+    p.add_argument("--no-browser", action="store_true")
+    p = add("inbox", cmd_inbox, "drop a raw text note into 00_inbox/", base=False)
+    p.add_argument("text", nargs="+")
+    p.add_argument("--path", "-p", action="append", metavar="DIR", help="a directory to consult during triage")
+    add("shortcut", cmd_shortcut, "create a Desktop shortcut that starts the viewer (Windows)", base=False)
+
+    p = add("ingest", cmd_ingest, "quarantine untrusted inbox text (markers, invisible chars, flags)")
+    p.add_argument("--dry-run", action="store_true")
+    p = add("triage", cmd_triage, "check (or --apply) a JSON move plan")
+    p.add_argument("plan")
+    p.add_argument("--apply", action="store_true")
+    p = add("new", cmd_new, "create a note from a template in the instance language")
+    p.add_argument("template")
+    p.add_argument("--slug")
+    p.add_argument("--date")
+    p.add_argument("--lang", choices=["en", "vi"])
+    p.add_argument("--title")
+    p = add("today", cmd_today, "today's date, weekday, ISO week", base=False)
+    p.add_argument("--week", action="store_true")

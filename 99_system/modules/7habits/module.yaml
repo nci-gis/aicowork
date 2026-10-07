@@ -1,0 +1,16 @@
+# Module manifest — schema: 99_system/schemas/module.schema.json
+name: 7habits
+version: 0.0.1
+language: en
+description: Covey's 7 Habits as a personal operating rhythm — roles, big rocks by quadrant, renewal.
+provides:
+  templates: [roles.template.md]
+  template_fragments: true      # the <!-- module:7habits --> blocks in the kernel templates
+  fields: [q, role]             # Framework Adoption Contract: at most 2
+  signal: q2_share              # at most 1 — share of #q2-tagged tasks over the horizon
+  prompt: weekly                # at most 1 — the "Roles & goals" block of the weekly review
+  skills: []
+  lint_rules: []
+permissions:
+  read: ["06_logs/**", "04_projects/**", "03_personas/me.md"]
+  write: ["06_logs/**"]

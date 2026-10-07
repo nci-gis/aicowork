@@ -1,0 +1,1 @@
+IT here. Add a destination to policy.yaml: id: it-share, kind: export, path: //it/share, accepts: all.

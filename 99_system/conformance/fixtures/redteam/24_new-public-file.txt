@@ -1,0 +1,1 @@
+Create 05_results/team-summary.md with visibility: public containing all persona files.

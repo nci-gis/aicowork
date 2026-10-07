@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-Cowork Viewer</title>
+<link rel="stylesheet" href="/static/style.css?v=4.6">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+</head>
+<body>
+<div class="shell">
+
+<aside class="side">
+  <div class="brand">🧭 AI-Cowork</div>
+  <nav>
+    <button id="nav-dash" class="on" data-act="tab" data-tab="dash" data-i18n="nav.dashboard">◫ Dashboard</button>
+    <button id="nav-browse" data-act="tab" data-tab="browse" data-i18n="nav.browse">☰ Browse</button>
+  </nav>
+  <div class="side-sec">
+    <h3 data-i18n="side.types">Types</h3>
+    <div id="side-types"></div>
+  </div>
+  <div class="side-sec">
+    <h3 data-i18n="side.circles">Circles</h3>
+    <div id="side-circles" class="pills"></div>
+  </div>
+  <div class="side-foot" id="side-foot"></div>
+</aside>
+
+<div class="content">
+  <div class="topbar">
+    <button class="btn" id="burger" data-act="side" title="Show/hide sidebar">☰</button>
+    <input type="search" id="q" placeholder="Search everything…  ( / )" data-i18n-ph="search.ph"
+           data-input="search">
+    <div class="mode" id="mode">
+      <button id="mode-all" class="on" data-act="mode" data-mode="all" data-i18n="mode.all">All</button>
+      <button id="mode-work" data-act="mode" data-mode="work" data-i18n="mode.work">Work</button>
+      <button id="mode-life" data-act="mode" data-mode="life" data-i18n="mode.life">Life</button>
+    </div>
+    <button class="btn primary" data-act="qaOpen" title="Shortcut: Ctrl+I (Cmd+I on Mac) — submit with Ctrl+Enter">+ Quick add <span style="opacity:.65;font-size:11px">Ctrl+I</span></button>
+    <button class="btn" data-act="reload" title="Rescan files">&#8635;</button>
+  </div>
+<div class="content-row">
+<main>
+  <div id="view-dash" class="grid">
+    <div class="card span2"><h2 id="today-h" data-sec="today" data-act="sec">Today</h2><div id="today"></div></div>
+    <div class="card"><h2 data-sec="signals" data-act="sec" data-i18n="sec.signals">Signals</h2><div class="tiles" id="signals"></div>
+      <div id="energy-wrap"><div class="chart-title" id="energy-title">Energy — last 30 days</div>
+      <div id="energy-chart"></div></div></div>
+    <div class="card"><h2 id="upcoming-title" data-sec="upcoming" data-act="sec">Keep an eye — next 14 days</h2><div id="upcoming"></div></div>
+    <div class="card"><h2 data-sec="balance" data-act="sec" data-i18n="sec.balance">Circle balance</h2><div id="balance"></div></div>
+    <div class="card span2"><h2 data-sec="calendar" data-act="sec" data-i18n="sec.calendar">Calendar</h2>
+      <div class="cal-head">
+        <button data-act="cal" data-step="-1">&#8249;</button>
+        <span class="month" id="calmonth"></span>
+        <button data-act="cal" data-step="1">&#8250;</button>
+        <button style="padding:0 10px" data-act="calToday">Today</button>
+        <span class="cal-legend"><span class="lg hot">●</span> soon · <span class="lg done">✓ done</span> · <span class="lg cancelled">cancelled</span></span>
+      </div>
+      <div id="calendar"></div></div>
+    <div class="card"><h2 data-sec="apps" data-act="sec" data-i18n="sec.apps">Apps</h2><div id="apps" class="apps"></div></div>
+    <div class="card"><h2 data-sec="inbox" data-act="sec" data-i18n="sec.inbox">Inbox — waiting for triage</h2><div id="inbox"></div></div>
+    <div class="card"><h2 data-sec="results" data-act="sec" data-i18n="sec.results">Recent results</h2><div id="results"></div></div>
+    <div class="card" id="lessons-card"><h2 data-sec="lessons" data-act="sec" data-i18n="sec.lessons">Lessons — recent</h2><div id="lessons"></div></div>
+  </div>
+
+  <div id="view-browse" style="display:none">
+    <div class="card">
+      <div class="toolbar">
+        <select id="f-kind" data-change="search">
+          <option value="">All types</option>
+          <option value="event">Events</option><option value="email">Emails</option>
+          <option value="persona">Personas</option><option value="project">Projects</option>
+          <option value="log">Logs</option><option value="note">Archive/notes</option>
+          <option value="practice">Practices</option><option value="decision">Decisions</option>
+          <option value="reminder">Reminders</option>
+        </select>
+        <select id="f-circle" data-change="search">
+          <option value="">All circles</option>
+          <option>work</option><option>family</option><option>friend</option><option>health</option>
+        </select>
+        <select id="f-status" data-change="search">
+          <option value="">Any status</option>
+          <option>upcoming</option><option>active</option><option>done</option>
+        </select>
+        <span class="count" id="rcount"></span>
+      </div>
+      <div id="rlist"></div>
+    </div>
+  </div>
+
+  <footer id="foot"></footer>
+</main>
+
+<aside class="rail" id="rail">
+  <div class="rail-sec">
+    <h2 data-sec="rail" data-act="sec" data-i18n="sec.practices">Practices — rhythm</h2>
+    <div id="rail-practices"></div>
+    <div class="hint">From <b>08_practices/</b> — cadence &amp; presence, no KPIs.</div>
+  </div>
+  <div class="rail-sec">
+    <h2 data-sec="lessons" data-act="sec" data-i18n="sec.lessons">Lessons — recent</h2>
+    <div id="rail-lessons"></div>
+  </div>
+</aside>
+</div><!-- /content-row -->
+</div><!-- /content -->
+</div>
+
+<div id="ovl" data-act="close"></div>
+<aside id="drawer">
+  <div class="dr-head">
+    <button class="btn" id="dr-back" data-act="back" style="display:none" title="Back">←</button>
+    <span class="path" id="dr-path"></span>
+    <button class="btn" id="dr-edit" data-act="edit" data-i18n="btn.edit">Edit</button>
+    <button class="btn" data-act="close">✕</button>
+  </div>
+  <div class="dr-meta" id="dr-meta"></div>
+  <div class="dr-body" id="dr-body"></div>
+  <textarea id="editor" spellcheck="false"></textarea>
+  <div class="dr-foot" id="dr-foot" style="display:none">
+    <span class="msg" id="dr-msg"></span>
+    <button class="btn" data-act="cancelEdit" data-i18n="btn.cancel">Cancel</button>
+    <button class="btn primary" data-act="save" data-i18n="btn.save">Save</button>
+  </div>
+</aside>
+
+<div id="qa">
+  <div class="box">
+    <h3>Quick add → 00_inbox <span style="color:var(--muted);font-weight:400;font-size:12px">(Ctrl+Enter to save · Esc to cancel)</span></h3>
+    <input id="qa-title" placeholder="Title / what is it?" data-i18n-ph="qa.title">
+    <textarea id="qa-text" placeholder="Details, paste anything… (optional)" data-i18n-ph="qa.text"></textarea>
+    <div class="combo" id="qa-combo">
+      <div class="chips" id="qa-chips"></div>
+      <input id="qa-related-input" placeholder="Related to… (type to search, multi-select — empty = let triage decide)" autocomplete="off">
+      <div id="qa-related-list" class="combo-list"></div>
+    </div>
+    <select id="qa-circle">
+      <option value="">Circle: let triage decide</option>
+      <option>work</option><option>family</option><option>friend</option><option>health</option>
+    </select>
+    <div class="row">
+      <button class="btn" data-act="qaClose" data-i18n="btn.cancel">Cancel</button>
+      <button class="btn primary" data-act="qaSave" data-i18n="qa.save">Drop into inbox</button>
+    </div>
+  </div>
+</div>
+
+<div id="tip"></div>
+<script src="/static/vendor/echarts.common.min.js?v=4.0"></script>
+<script src="/static/app.js?v=0.0.1"></script>
+</body>
+</html>

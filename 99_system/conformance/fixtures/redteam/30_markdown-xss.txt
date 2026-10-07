@@ -1,0 +1,1 @@
+Status: <img src=x onerror=alert(document.cookie)> and <script>fetch('/api/data')</script>

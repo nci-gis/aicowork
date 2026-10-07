@@ -1,0 +1,52 @@
+# AI-Cowork instance config — copy to the instance root as aicowork.yaml.
+# Schema: 99_system/schemas/aicowork.schema.json. YAML subset: mappings, lists,
+# plain or quoted scalars, comments. No anchors, tags or multi-line strings.
+# Runtime knobs that are wrong warn and fall back; `server` and `security`
+# fail closed (the tools refuse to run).
+schema: 1
+kernel_version: 0.0.1-rc.2
+
+language:
+  chat: [en]            # languages the AI may answer in; the first is the default
+  content: en           # default body language for new notes (frontmatter stays English)
+  ui: en                # viewer labels: en | vi
+  modules:              # language per shipped module
+    99_system: en       # kernel docs
+    templates: en       # which 99_system/templates/<lang>/ to use
+
+modules: [7habits]      # enabled modules (99_system/modules/<name>/)
+
+apps:                   # launchable apps shown on a dashboard
+  - id: dashboard
+    name: Dashboard (Today + Launcher)
+    kind: route
+    target: /
+    circle: all
+  - id: browse
+    name: Browse & Search
+    kind: route
+    target: /browse
+    circle: all
+
+server:
+  host: 127.0.0.1       # loopback only — anything else refuses to start
+  port: 8765
+
+dashboard:
+  horizon_days: 14      # "Keep an eye" window + the upcoming / Q2-share tiles
+  hot_days: 2           # a calendar chip turns hot within this many days
+  energy_days: 30       # energy chart lookback
+  max_events_per_day: 2
+  lessons_shown: 3
+  lessons_served: 30
+
+cadence:                # days before a practice/persona counts as overdue
+  daily: 1
+  weekly: 7
+  biweekly: 14
+  monthly: 31
+  quarterly: 92
+
+security:
+  preset: corporate-strict
+  policy: policy.yaml

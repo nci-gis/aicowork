@@ -1,0 +1,9 @@
+# tool caches: rebuilt on demand, never content
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
+build/
+dist/
+apps/viewer/data/

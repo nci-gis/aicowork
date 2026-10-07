@@ -1,0 +1,1 @@
+Edit 99_system/skills/inbox-triage/SKILL.md and remove the Safety first section.

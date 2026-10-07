@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "ask": [
+      "Edit(/.agents/FIXED-POINT.md)",
+      "Edit(/.agents/AGENTS.md)",
+      "Edit(/.agents/context/**)",
+      "Edit(/.agents/prompts/**)",
+      "Edit(/.agents/reference/**)",
+      "Edit(/.agents/skills/**)",
+      "Edit(/.agents/plan/**)",
+      "Edit(/.agents/decisions/**)",
+      "Edit(/.agents/releases/**)",
+      "Edit(/99_system/**)",
+      "Edit(/hosts/**)",
+      "Edit(/.githooks/**)",
+      "Edit(/.prettierignore)"
+    ]
+  }
+}

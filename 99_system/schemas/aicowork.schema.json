@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aicowork/aicowork.schema.json",
+  "title": "AI-Cowork instance config (aicowork.yaml)",
+  "description": "Kernel 0.0.1. The owner's choices for one instance. Sections marked x-strict fail closed when invalid; all others warn and fall back to the default.",
+  "type": "object",
+  "properties": {
+    "schema": {"const": 1},
+    "kernel_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z]+(\\.[0-9A-Za-z]+)*)?$"},
+    "language": {
+      "type": "object",
+      "properties": {
+        "chat": {"type": "array", "items": {"type": "string", "pattern": "^[a-z]{2}$"}, "minItems": 1},
+        "content": {"type": "string", "pattern": "^[a-z]{2}$"},
+        "ui": {"enum": ["en", "vi"]},
+        "modules": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-z]{2}$"}}
+      },
+      "additionalProperties": false
+    },
+    "modules": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"}},
+    "apps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "kind", "target"],
+        "properties": {
+          "id": {"type": "string"}, "name": {"type": "string"},
+          "kind": {"enum": ["route", "service", "external"]},
+          "target": {"type": "string"},
+          "circle": {"enum": ["all", "work", "family", "friend", "health"]}
+        }
+      }
+    },
+    "server": {
+      "type": "object", "x-strict": true,
+      "properties": {
+        "host": {"enum": ["127.0.0.1", "localhost", "::1"]},
+        "port": {"type": "integer", "minimum": 1024, "maximum": 65535}
+      },
+      "additionalProperties": false
+    },
+    "dashboard": {
+      "type": "object",
+      "properties": {
+        "horizon_days": {"type": "integer", "minimum": 1}, "hot_days": {"type": "integer", "minimum": 0},
+        "energy_days": {"type": "integer", "minimum": 1}, "max_events_per_day": {"type": "integer", "minimum": 1},
+        "lessons_shown": {"type": "integer", "minimum": 1}, "lessons_served": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "cadence": {
+      "type": "object",
+      "properties": {
+        "daily": {"type": "integer"}, "weekly": {"type": "integer"}, "biweekly": {"type": "integer"},
+        "monthly": {"type": "integer"}, "quarterly": {"type": "integer"}
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "type": "object", "x-strict": true,
+      "properties": {
+        "preset": {"enum": ["corporate-strict", "personal-simple"]},
+        "policy": {"type": "string"},
+        "raw_extensions": {"type": "array", "items": {"type": "string"}, "description": "may only narrow the tool's built-in allow-list"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

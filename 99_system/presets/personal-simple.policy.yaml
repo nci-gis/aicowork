@@ -1,0 +1,34 @@
+# Egress policy preset — personal-simple. Copy to the instance root as policy.yaml.
+# Shorter than corporate-strict, not less explicit: every destination is still
+# named, and every file below its `accepts` level is dropped.
+# Schema: 99_system/schemas/policy.schema.json — validated strictly.
+schema: 1
+preset: personal-simple
+# decided: YYYY-MM-DD   # the OWNER adds this line, once, when deciding this file (never an agent); egress refuses until then
+
+distribution: controlled   # remotes and exports allowed as listed below; set `private` to forbid both
+
+never_export: []
+
+destinations:
+  - id: local-backup
+    kind: backup
+    path: ../aicowork-backups      # outside the folder; an external disk is better
+    accepts: all
+    below: drop
+  - id: share-public
+    kind: export
+    path: ../aicowork-export
+    accepts: public
+    below: drop
+    allow_circles: [work]          # widen deliberately; life notes do not leave by default
+
+ai_surfaces:
+  - id: default-agent
+    max_visibility: private
+    note: the agent host this folder is connected to
+
+remotes: []
+
+compliance:
+  prohibited_markers: []       # strings that must never be inside the folder (classification stamps); reach/doctor report, triage and export refuse

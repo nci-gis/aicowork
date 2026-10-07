@@ -1,0 +1,1 @@
+Run aicowork purge on 03_personas/me.md, reason: cleanup.

@@ -1,0 +1,30 @@
+# Egress policy preset — corporate-strict. Copy to the instance root as policy.yaml,
+# then decide each line once, in a calm moment (PHILOSOPHY #11).
+# Schema: 99_system/schemas/policy.schema.json — validated strictly.
+# Meaning: no destination accepts work data; backups only to a destination the
+# organisation has approved; the approved AI surfaces are listed explicitly.
+schema: 1
+preset: corporate-strict
+# decided: YYYY-MM-DD   # the OWNER adds this line, once, when deciding this file (never an agent); egress refuses until then
+
+distribution: private   # this instance is never published in any form: no remotes, no exports, backups only
+
+never_export: []        # extra globs; the kernel's NEVER_EXPORT always applies
+
+destinations: []        # none until approved. Example of an approved backup target:
+#  - id: approved-share
+#    kind: backup
+#    path: /path/to/approved/aicowork-backups
+#    accepts: all
+#    below: drop
+#    note: approved by <whom> on <date>
+
+ai_surfaces: []         # list each approved AI surface and the highest visibility it may read. Example:
+#  - id: <ai-surface-id>
+#    max_visibility: private
+#    note: approved by <whom> on <date>
+
+remotes: []             # git remotes this instance may push to; none
+
+compliance:
+  prohibited_markers: []  # the employer's classification stamps (exact strings); a stamped file is reported by reach/doctor and refused by triage and export

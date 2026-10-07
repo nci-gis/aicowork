@@ -1,0 +1,11 @@
+# Formatted by `devkit fmt` (Prettier, pinned there). These are excluded on purpose:
+# templates carry {{placeholders}} in their frontmatter that a YAML formatter rewrites,
+# and the fixtures are generated (`devkit fixtures`) and checked byte for byte.
+99_system/templates/
+99_system/modules/*/*.template.md
+99_system/conformance/fixtures/
+# not Markdown we own, or not tracked
+98_tools/apps/viewer/src/viewer/web/vendor/
+_scratch/
+**/.venv/
+*.zip

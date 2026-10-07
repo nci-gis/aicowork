@@ -1,0 +1,15 @@
+[project]
+name = "aicowork-core"
+version = "0.0.1rc4"
+description = "AI-Cowork shared library: base folder and settings, folder contract, frontmatter, safe paths, YAML subset, manifests, leak scanners. Standard library only."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }   # 98_tools/LICENSE
+dependencies = []            # by design: every tool and an agent sandbox can import it with no installs
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aicowork_core"]

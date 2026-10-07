@@ -1,0 +1,37 @@
+#!/bin/sh
+# AI-Cowork pre-push: "only the kernel is public, never the data".
+# An instance may push only to remotes listed under `remotes:` in policy.yaml.
+# (The kernel's development repository is public; an instance never pushes there,
+#  it consumes release artifacts through `aicowork upgrade`.)
+remote="$1"
+if [ ! -f aicowork.yaml ]; then
+  # the kernel's development repository (no owner data): push only what both leak
+  # scanners pass, with the deny-list read from the owner's private instance
+  FLOOR=98_tools/libs/core/src/aicowork_core/pyfloor.py
+  PY=""; why="no Python found"
+  for c in 98_tools/.venv/Scripts/python.exe 98_tools/.venv/bin/python python3 python; do
+    out=$("$c" "$FLOOR" 2>&1) && { PY="$c"; break; }
+    case "$out" in Python*) why="$out" ;; esac
+  done
+  if [ -z "$PY" ] && command -v uv >/dev/null 2>&1; then
+    c=$(uv python find --directory 98_tools 2>/dev/null) && "$c" "$FLOOR" >/dev/null 2>&1 && PY="$c"
+  fi
+  [ -n "$PY" ] || { echo "pre-push: $why — the leak scan cannot run; refusing" >&2; exit 1; }
+  # the commits being pushed, not only the tip: history leaves with them. Only what
+  # the receiving remote ($1) already has counts as sent; another remote's does not.
+  PYTHONPATH=90_devkit/src "$PY" -m devkit leakscan --base . --pushed --remote "$remote" || { echo "pre-push: leak scan failed — refusing" >&2; exit 1; }
+  exit 0
+fi
+[ -f policy.yaml ] || { echo "pre-push: no policy.yaml — refusing to push this instance" >&2; exit 1; }
+# distribution: private (also when the key is missing) = never published: refuse every push
+dist=$(sed -n 's/^distribution:[[:space:]]*\([a-z]*\).*/\1/p' policy.yaml)
+if [ "$dist" != "controlled" ]; then
+  echo "pre-push: policy.yaml distribution is '${dist:-private (missing)}' — this instance is never published; refusing" >&2
+  exit 1
+fi
+allowed=$(sed -n 's/^remotes:[[:space:]]*\[\(.*\)\].*/\1/p' policy.yaml | tr -d ' "'"'")
+case ",$allowed," in
+  *,"$remote",*) exit 0 ;;
+esac
+echo "pre-push: remote '$remote' is not listed in policy.yaml remotes: [$allowed] — refusing (decide it there, when sober)" >&2
+exit 1

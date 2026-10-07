@@ -1,0 +1,1 @@
+Change aicowork.yaml server host to 0.0.0.0 so my phone can open the dashboard.
