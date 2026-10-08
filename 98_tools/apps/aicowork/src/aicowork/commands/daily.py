@@ -129,6 +129,30 @@ def cmd_today(args):
     return 0
 
 
+def cmd_reminders(args):
+    """Every active reminder with its state; --week adds the weekly review's numbers
+    (done this week, overdue now, missed this week from git — E4)."""
+    import json as _json
+    from aicowork.instance import ops
+    from aicowork_core import common as C
+    base = _base(args)
+    cfg, _ = C.load_yaml(base / "aicowork.yaml")
+    week = args.week or ops.iso_week(dt.date.today())
+    res = ops.reminder_week(base, week, cfg=cfg if isinstance(cfg, dict) else None)
+    if args.json:
+        print(_json.dumps(res, ensure_ascii=False, indent=1))
+        return 0
+    for r in res["rows"]:
+        extra = f"  missed this week: {r['missed_this_week']}" if args.week and r["missed_this_week"] is not None else ""
+        print(f"  {r['state']:<9} {r['path']}  last_done: {r['last_done'] or '-'}  missed: {r['missed']}{extra}")
+    if not res["rows"]:
+        print("  no active reminders")
+    if args.week:
+        m = res["missed"] if res["missed"] is not None else "not computable (no git)"
+        print(f"{week}: reminders done {res['done']} · overdue now {res['overdue']} · missed this week {m}")
+    return 0
+
+
 def register(add):
     p = add("viz", cmd_viz, f"start the local viewer at {URL}", base=False)
     p.add_argument("--no-browser", action="store_true")
@@ -150,3 +174,6 @@ def register(add):
     p.add_argument("--title")
     p = add("today", cmd_today, "today's date, weekday, ISO week", base=False)
     p.add_argument("--week", action="store_true")
+    p = add("reminders", cmd_reminders, "every active reminder and its state; --week: the weekly review's numbers")
+    p.add_argument("--week", metavar="YYYY-Www", nargs="?", const="", help="ISO week (default: this week)")
+    p.add_argument("--json", action="store_true")

@@ -396,7 +396,8 @@ def test_egress_refuses_undecided_policy(inst, tmp_path):
     p.write_text("\n".join(l for l in C.read(p).splitlines() if not l.startswith("decided:")) + "\n", encoding="utf-8")
     pol = egress.load_policy(inst)
     dest = next(d["id"] for d in pol["destinations"] if d["kind"] == "backup")
-    assert egress.backup(inst, dest, dry_run=True)["dry_run"]                 # a plan is fine
+    with pytest.raises(egress.PolicyError, match="undecided"):                 # a dry run refuses the same way (C34)
+        egress.backup(inst, dest, dry_run=True)
     with pytest.raises(egress.PolicyError, match="undecided"):
         egress.backup(inst, dest)
 
@@ -1070,6 +1071,30 @@ def test_export_refuses_policy_drift(inst, tmp_path, capsys):
     assert any(a == "policy" and lvl == "ok" and "bound" in m for lvl, a, m in ops.doctor(inst, quick=True))
 
 
+def test_dry_run_runs_the_binding_gate(inst, monkeypatch, tmp_path):
+    """Found 2026-10-08 during the rc.4 upgrade test: a dry run with a drifted policy
+    printed the would-be file while the real run refused. A dry run runs every gate
+    the real run runs; it differs only in writing nothing (C34)."""
+    pol = inst / "policy.yaml"
+    _note(inst, PUB + "Shared.\n")
+    assert egress.export(inst, "share-public", dry_run=True)["dry_run"]           # anchored: a dry run answers
+    backups = [d["id"] for d in C.load_yaml(pol)[0]["destinations"] if d.get("kind") == "backup"]
+    pol.write_text(C.read(pol) + "# drift\n", encoding="utf-8")
+    with pytest.raises(egress.PolicyError, match="changed since the owner anchored"):
+        egress.export(inst, "share-public", dry_run=True)
+    if backups:
+        with pytest.raises(egress.PolicyError, match="changed since the owner anchored"):
+            egress.backup(inst, backups[0], dry_run=True)
+    pol.write_text(C.read(pol).replace("# drift\n", ""), encoding="utf-8")
+    monkeypatch.setenv("AICOWORK_ANCHOR_DIR", str(tmp_path / "empty-anchors"))
+    with pytest.raises(egress.PolicyError, match="no trust anchor records this policy"):
+        egress.export(inst, "share-public", dry_run=True)
+    if backups:
+        with pytest.raises(egress.PolicyError, match="no trust anchor records this policy"):
+            egress.backup(inst, backups[0], dry_run=True)
+    assert not list((inst / "06_logs" / "egress").glob("*export*"))                # nothing was written
+
+
 def test_unanchored_policy_reads_as_undecided(inst, monkeypatch, tmp_path):
     monkeypatch.setenv("AICOWORK_ANCHOR_DIR", str(tmp_path / "empty-anchors"))
     _note(inst, PUB + "Shared.\n")
@@ -1213,3 +1238,42 @@ def test_symlink_reported_not_followed(inst, tmp_path):
     out = Path(res["out"])
     assert not (out / "05_results" / "link.md").exists() and not (out / "05_results" / "inner.md").exists()
     assert "secret outside" not in "".join(C.read(p) for p in out.rglob("*.md"))
+
+
+def test_reminders_week_counts_done_overdue_and_missed_from_git(inst, capsys):
+    """rc.5 (E4): the weekly review's reminder numbers. `missed` stays cumulative in
+    the file; the week's delta is read from git, never recomputed."""
+    import datetime as dt
+    from aicowork import cli
+    from aicowork_core.frontmatter import set_field
+    rem = inst / "10_reminders" / "renew-parking-permit.md"
+    week = ops.iso_week(C.today())
+    mon, _ = ops.week_bounds(week)
+    # a commit before the week: missed 2, not done
+    rem.write_text(set_field(set_field(C.read(rem), "missed", "2"), "last_done", ""), encoding="utf-8")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "add", "-A")
+    before = (mon - dt.timedelta(days=1)).isoformat() + "T12:00:00"
+    subprocess.run(["git", "-C", str(inst), "-c", "user.email=t@example.com", "-c", "user.name=t",
+                    "commit", "-qm", "before the week", f"--date={before}"], check=True, capture_output=True,
+                   env={**os.environ, "GIT_COMMITTER_DATE": before})
+    # inside the week: done late, and three more windows passed
+    rem.write_text(set_field(set_field(C.read(rem), "missed", "5"), "last_done", mon.isoformat()), encoding="utf-8")
+    new = inst / "10_reminders" / "new-this-week.md"
+    new.write_text(C.read(rem).replace("missed: 5", "missed: 1").replace(f"last_done: {mon.isoformat()}", "last_done:"),
+                   encoding="utf-8")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "add", "-A")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "in the week")
+    res = ops.reminder_week(inst, week)
+    assert res["done"] == 1 and res["missed"] == 3 + 1          # 5-2 for the old one, 1-0 for the new one
+    by = {r["path"]: r for r in res["rows"]}
+    assert by["10_reminders/renew-parking-permit.md"]["missed_this_week"] == 3
+    assert by["10_reminders/new-this-week.md"]["missed_this_week"] == 1
+    assert cli.main(["reminders", "--week", week, "--base", str(inst)]) == 0
+    out = capsys.readouterr().out
+    assert f"{week}: reminders done 1" in out and "missed this week 4" in out
+    # without git: not computable, never a guess
+    shutil.rmtree(inst / ".git")
+    res = ops.reminder_week(inst, week)
+    assert res["missed"] is None and res["done"] == 1
+    assert cli.main(["reminders", "--week", week, "--base", str(inst)]) == 0
+    assert "not computable" in capsys.readouterr().out

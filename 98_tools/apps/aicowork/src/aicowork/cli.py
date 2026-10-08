@@ -23,7 +23,7 @@ GROUPS_OF_COMMANDS = {
         "init", "decide", "doctor", "conform", "audit", "reach", "backup", "export",
         "verify-receipts", "upgrade", "anchor", "manifest", "verify", "denylist", "modules"],
     "every day — capture, triage, notes, the viewer": [
-        "inbox", "ingest", "triage", "new", "today", "viz", "shortcut"],
+        "inbox", "ingest", "triage", "new", "today", "reminders", "viz", "shortcut"],
     "advanced & evidence — sealed copies, retention, InfoSec, host skills": [
         "unseal", "retention", "purge", "audit-pack", "sbom", "skills"],
 }

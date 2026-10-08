@@ -22,7 +22,7 @@ MAX_PERIODS = 2000           # guard: never walk more periods than this in one c
 
 # repeat: str; days: tuple of ints (weekday 0-6 / day 1-31) or (month, day) pairs;
 # start, until, last_done: date or None; status: active | paused | done
-Rule = namedtuple("Rule", "repeat days start until last_done status")
+Rule = namedtuple("Rule", "repeat days start until last_done status notice")
 
 
 def _date(v):
@@ -87,7 +87,17 @@ def validate(meta):
     status = str(meta.get("status") or "active").strip()
     if status not in STATUSES:
         out.append(f"status {status!r} is not one of {', '.join(STATUSES)}")
+    if _notice(meta.get("notice")) is False:
+        out.append(f"`notice` {meta.get('notice')!r} is not a whole number of days")
     return out
+
+
+def _notice(v):
+    """-> int ≥ 0, None when unset, False when invalid."""
+    if v in (None, ""):
+        return None
+    s = str(v).strip()
+    return int(s) if s.isdigit() else False
 
 
 def parse_rule(meta):
@@ -101,7 +111,7 @@ def parse_rule(meta):
         return None
     days = tuple(sorted({_day_item(repeat, x)[0] for x in items}))
     return Rule(repeat, days, start, _date(meta.get("until")), _date(meta.get("last_done")),
-                str(meta.get("status") or "active").strip())
+                str(meta.get("status") or "active").strip(), _notice(meta.get("notice")))
 
 
 # ---------------- occurrence maths ----------------
@@ -182,7 +192,9 @@ def state(rule, today, horizon_days):
     lo = rule.start
     if rule.last_done and rule.last_done + dt.timedelta(days=1) > lo:
         lo = rule.last_done + dt.timedelta(days=1)
-    hi = today + dt.timedelta(days=max(int(horizon_days), 0))
+    # rule 8: an upcoming window is shown within `notice` days of `first` when set, else within the horizon
+    ahead = rule.notice if rule.notice is not None else max(int(horizon_days), 0)
+    hi = today + dt.timedelta(days=ahead)
     wins, capped = _walk(rule, lo, hi)
     open_ = [w for w in wins if rule.last_done is None or rule.last_done < w[0]]
     if not open_:

@@ -216,9 +216,10 @@ def backup(base, dest_id, dry_run=False):
         raise PolicyError("backup needs a git repository (it writes a git bundle)")
     rc, head = C.git(base, "rev-parse", "HEAD")
     out = target_dir / f"aicowork-{C.today().isoformat()}-{head.strip()[:8]}.bundle"
+    # a dry run runs every gate the real run runs; it differs only in writing nothing
+    require_decided(pol, base)
     if dry_run:
         return {"dest": dest_id, "file": str(out), "dry_run": True}
-    require_decided(pol, base)
     target_dir.mkdir(parents=True, exist_ok=True)
     rc, msg = C.git(base, "bundle", "create", str(out), "--all")
     if rc:
@@ -410,8 +411,7 @@ def export(base, dest_id, max_visibility=None, only_private=False, dry_run=False
                           + "\n  ".join(f"{r}: {m}" for r, m in stamped))
     encrypt = d.get("below") == "encrypt"
     out_dir = dest_path(base, d) / f"aicowork-export-{dt.datetime.now():%Y%m%d-%H%M%S}"
-    if not dry_run:
-        require_decided(load_policy(base), base)
+    require_decided(pol_, base)          # a dry run too: it must tell the truth about the real run
     files, blocks, dropped_total, sidecars = [], 0, 0, []
     for p, r, vis in selected:
         raw = C.read(p).replace("\r\n", "\n")    # one line ending: reduce_frontmatter reads \n fences

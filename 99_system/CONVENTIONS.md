@@ -121,7 +121,7 @@ Work items may carry status/deadline/KPI. Life items (family/friend/health) carr
 
 ## Reminders
 
-A reminder (`10_reminders/slug.md`, `type: reminder`) is a duty on fixed dates that repeats: `repeat`, `days`, `date` (start) and optional `until` (end), both inclusive; `status` active/paused/done (missing = active). Its only state is `last_done`. The key is `days`, never `on` (YAML 1.1 reads `on` as true). Every implementation computes the same answer:
+A reminder (`10_reminders/slug.md`, `type: reminder`) is a duty on fixed dates that repeats: `repeat`, `days`, `date` (start) and optional `until` (end), both inclusive, optional `notice` (days of warning); `status` active/paused/done (missing = active). Its only state is `last_done`. The key is `days`, never `on` (YAML 1.1 reads `on` as true). Every implementation computes the same answer:
 
 1. **Clamp.** A monthly day past the month's end is its last day; `"02-29"` is `"02-28"` in other years; duplicates collapse.
 2. **Windows.** Consecutive dates in one period (week Monday–Sunday, month, year) form one window `[first, last]`; a window never crosses a period.
@@ -130,7 +130,7 @@ A reminder (`10_reminders/slug.md`, `type: reminder`) is a duty on fixed dates t
 5. **State** of the earliest open window today: `upcoming` before `first` (days left); `due` from `first` to `last`; `overdue` after `last` (days over; _missed_ = open windows already past).
 6. **Expired**: `until` passed, nothing open, still active. Tools never change the file; the owner sets `status: done` or archives it.
 7. Paused, done or invalid reminders are not computed; invalid ones are conformance errors.
-8. Shown with the "upcoming" signal (no new signal) when due, overdue, expired, or upcoming within the dashboard horizon.
+8. Shown with the "upcoming" signal (no new signal) when due, overdue, expired, or upcoming within `notice` days of `first` (when set; else the dashboard horizon).
 9. **Done** sets `last_done` (today by default; never in the future, never before `date`) and adds to `missed` the windows that passed undone, the latest passed one excepted (done late is not missed); nothing else changes. `missed` is not recomputable from the file: an owner's edit makes it drift, and that is accepted.
 
 ## Modules

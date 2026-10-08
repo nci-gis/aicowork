@@ -7,6 +7,7 @@ until:
 repeat: monthly
 days: [1]
 last_done:
+notice: 7
 status: active
 ---
 # Renew the parking permit
