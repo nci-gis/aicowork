@@ -396,7 +396,8 @@ def test_egress_refuses_undecided_policy(inst, tmp_path):
     p.write_text("\n".join(l for l in C.read(p).splitlines() if not l.startswith("decided:")) + "\n", encoding="utf-8")
     pol = egress.load_policy(inst)
     dest = next(d["id"] for d in pol["destinations"] if d["kind"] == "backup")
-    assert egress.backup(inst, dest, dry_run=True)["dry_run"]                 # a plan is fine
+    with pytest.raises(egress.PolicyError, match="undecided"):                 # a dry run refuses the same way (C34)
+        egress.backup(inst, dest, dry_run=True)
     with pytest.raises(egress.PolicyError, match="undecided"):
         egress.backup(inst, dest)
 
@@ -1068,6 +1069,30 @@ def test_export_refuses_policy_drift(inst, tmp_path, capsys):
     anchor.anchor(inst)
     assert egress.export(inst, "share-public")["count"]
     assert any(a == "policy" and lvl == "ok" and "bound" in m for lvl, a, m in ops.doctor(inst, quick=True))
+
+
+def test_dry_run_runs_the_binding_gate(inst, monkeypatch, tmp_path):
+    """Found 2026-10-08 during the rc.4 upgrade test: a dry run with a drifted policy
+    printed the would-be file while the real run refused. A dry run runs every gate
+    the real run runs; it differs only in writing nothing (C34)."""
+    pol = inst / "policy.yaml"
+    _note(inst, PUB + "Shared.\n")
+    assert egress.export(inst, "share-public", dry_run=True)["dry_run"]           # anchored: a dry run answers
+    backups = [d["id"] for d in C.load_yaml(pol)[0]["destinations"] if d.get("kind") == "backup"]
+    pol.write_text(C.read(pol) + "# drift\n", encoding="utf-8")
+    with pytest.raises(egress.PolicyError, match="changed since the owner anchored"):
+        egress.export(inst, "share-public", dry_run=True)
+    if backups:
+        with pytest.raises(egress.PolicyError, match="changed since the owner anchored"):
+            egress.backup(inst, backups[0], dry_run=True)
+    pol.write_text(C.read(pol).replace("# drift\n", ""), encoding="utf-8")
+    monkeypatch.setenv("AICOWORK_ANCHOR_DIR", str(tmp_path / "empty-anchors"))
+    with pytest.raises(egress.PolicyError, match="no trust anchor records this policy"):
+        egress.export(inst, "share-public", dry_run=True)
+    if backups:
+        with pytest.raises(egress.PolicyError, match="no trust anchor records this policy"):
+            egress.backup(inst, backups[0], dry_run=True)
+    assert not list((inst / "06_logs" / "egress").glob("*export*"))                # nothing was written
 
 
 def test_unanchored_policy_reads_as_undecided(inst, monkeypatch, tmp_path):
