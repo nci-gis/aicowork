@@ -361,3 +361,6 @@ li.task.done{ color:var(--muted); text-decoration:line-through }
 .plan { margin-top:10px; padding-top:8px; border-top:1px dashed var(--ring) }
 .plan-actions { display:flex; gap:8px; margin-top:6px }
 .plan-actions .btn:disabled { opacity:.5; cursor:wait }
+
+.badge.link { cursor:pointer; margin-left:6px }
+.badge.link:hover { color:var(--accent); border-color:var(--accent) }

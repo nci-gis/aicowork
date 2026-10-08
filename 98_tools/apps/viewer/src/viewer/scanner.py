@@ -3,6 +3,7 @@
 import datetime as dt
 import json
 import re
+from pathlib import Path
 
 from aicowork_core.frontmatter import read_text, parse_frontmatter, md_title, parse_date  # noqa: F401
 from .config import BASE, ALL_FOLDERS, CIRCLES, SKIP_NAMES
@@ -70,7 +71,7 @@ def parse_file(rel, default_kind):
         "energy": _int_or_none(meta.get("energy"), 1, 5),
         "q": _int_or_none(meta.get("q"), 1, 4),
         "q1": qc[1], "q2": qc[2], "q3": qc[3], "q4": qc[4],
-        "lessons": lessons(body, meta.get("date")),
+        "lessons": lessons(body, meta.get("date"), BASE),
         "body": body,
     }
 
@@ -122,8 +123,29 @@ def q_counts(body):
     return c
 
 
-def lessons(body, date):
-    """Lines tagged #lesson anywhere -> [(date, text)] for the lessons index.
+def lesson_context(text, base=None):
+    """The trailing `[context]` of a lesson line (inbox-triage step 6). -> (text without
+    it, path or None): a path when it names an existing file inside the folder (E8),
+    else the label stays in the text and the path is None."""
+    m = re.search(r"\s*\[([^\[\]]{1,200})\]\s*$", text)
+    if not m or base is None:
+        return text, None
+    label = m.group(1).strip()
+    if not label or "\\" in label or label.startswith(("/", "~")) or ".." in label.split("/"):
+        return text, None
+    p = Path(base) / label
+    try:
+        inside = p.resolve().is_relative_to(Path(base).resolve())
+    except (OSError, ValueError):
+        inside = False
+    if inside and p.is_file() and not p.is_symlink():
+        return text[:m.start()].rstrip(), label
+    return text, None
+
+
+def lessons(body, date, base=None):
+    """Lines tagged #lesson anywhere -> [(date, text, context)] for the lessons index;
+    `context` is the path a trailing `[context]` names when such a file exists (E8).
 
     HTML comments are skipped: templates explain the tag inside <!-- --> blocks,
     and an instruction about lessons is not itself a lesson."""
@@ -143,7 +165,8 @@ def lessons(body, date):
             # A bare label ("One lesson:") is an unfilled template placeholder,
             # not a lesson — indexing it would junk up the Lessons card.
             if text and not text.endswith(":"):
-                out.append((str(date or ""), text))
+                text, ctx = lesson_context(text, base)
+                out.append((str(date or ""), text, ctx))
     return out
 
 

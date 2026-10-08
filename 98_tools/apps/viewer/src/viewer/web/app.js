@@ -47,6 +47,7 @@ const ACT = {
   cancelEdit:  () => cancelEdit(),
   save:        () => saveItem(),
   remDone:     el => reminderDone(el.dataset.path, +el.dataset.mtime),
+  openCtx:     (el, e) => { e.stopPropagation(); openItem(el.dataset.path, true); },
   planApply:   el => triagePlan(el.dataset.name, 'apply'),
   planDismiss: el => triagePlan(el.dataset.name, 'dismiss'),
 };
@@ -196,8 +197,8 @@ function renderToday(){
     html += '<div class="up-group">On this day</div><ul class="plain">' + otd.map(i => `
       <li data-act="open" data-path="${esc(i.path)}"><div class="li-top">
         ${visBadge(i.visibility)}<span class="badge">${i.months_ago} month${i.months_ago>1?'s':''} ago</span>
-        <span class="when">${esc(i.date)}</span>
-      </div><div class="li-title">${esc(i.title)}</div></li>`).join('') + '</ul>';
+        <span class="when">${esc(i.date)}</span>${i.kind==='lesson' ? lessonCtx(i) : ''}
+      </div><div class="li-title">${i.kind==='lesson' ? '🎓 ' : ''}${esc(i.title)}</div></li>`).join('') + '</ul>';
   $('today').innerHTML = html;
 }
 
@@ -304,6 +305,10 @@ function renderRail(){
 
 function toggleLessons(){ lessonsAll = !lessonsAll; renderLessons(); }
 
+// a lesson's [context] that names a file opens that file (E8); the click must not bubble to the lesson's own row
+const lessonCtx = l => l.context
+  ? ` <span class="badge link" data-act="openCtx" data-path="${esc(l.context)}" title="${esc(l.context)}">📎 ${esc(l.context.split('/').pop())}</span>` : '';
+
 function renderLessons(){
   const all = DATA.lessons, cap = ui('lessons_shown', 3);
   const total = DATA.lessons_total != null ? DATA.lessons_total : all.length;
@@ -327,7 +332,7 @@ function renderLessons(){
   targets.forEach(el => el.innerHTML =
     '<ul class="plain">' + rows.map(l => `
         <li data-act="open" data-path="${esc(l.path)}">
-          <div class="li-top"><span class="when">${esc(l.date)}</span></div>
+          <div class="li-top"><span class="when">${esc(l.date)}</span>${lessonCtx(l)}</div>
           <div class="li-title">${esc(l.text)}</div></li>`).join('') + '</ul>' + toggle);
 }
 
