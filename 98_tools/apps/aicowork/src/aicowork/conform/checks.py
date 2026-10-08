@@ -28,7 +28,8 @@ KERNEL_REQUIRED = ("PHILOSOPHY.md", "CONVENTIONS.md", "REBUILD.md", "VERSION",
                    "schemas/frontmatter.schema.json", "schemas/aicowork.schema.json",
                    "schemas/policy.schema.json", "schemas/module.schema.json",
                    "presets/corporate-strict.policy.yaml", "presets/personal-simple.policy.yaml")
-TEMPLATES = ("daily-log", "weekly-review", "event", "email", "persona", "practice", "decision", "reminder")
+TEMPLATES = ("daily-log", "weekly-review", "event", "email", "persona", "practice", "decision", "reminder",
+             "watch", "watch-result")
 # Host, IDE, model and provider names that must not appear in kernel-ring files.
 HOST_NAMES = [r"device_[a-z_]+", r"\$HOME/mnt", r"/sessions/[^/\s]+/mnt", r"\bClaude\b",
               r"CLAUDE\.md", r"AGENTS\.md", r"(?<!AI-)\bCowork\b", r"\bCursor\b", r"\bCodex\b",
@@ -208,6 +209,13 @@ def validate_config(cfg):
                 errs.append(f"app {a['id']}: a service target is a loopback http(s) URL")
             elif a["kind"] == "external" and not re.match(r"^https?://", t, re.I):
                 errs.append(f"app {a['id']}: an external target is an http(s) URL")
+            # `command` (rc.6): only a service has one; a list of words, never a shell string
+            if "command" in a:
+                cmd = a["command"]
+                if a["kind"] != "service":
+                    errs.append(f"app {a['id']}: command is for kind: service only")
+                elif not isinstance(cmd, list) or not cmd or not all(isinstance(x, str) and x.strip() for x in cmd):
+                    errs.append(f"app {a['id']}: command is a non-empty list of strings")
     srv = cfg.get("server") or {}
     if srv.get("host", "127.0.0.1") not in ("127.0.0.1", "localhost", "::1"):
         errs.append("server.host must be a loopback address")

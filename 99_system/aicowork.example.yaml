@@ -27,6 +27,12 @@ apps:                   # launchable apps shown on a dashboard
     kind: route
     target: /browse
     circle: all
+  # - id: notes-graph         # a service: `aicowork app notes-graph` starts it (your terminal, cwd = this folder)
+  #   name: Notes graph
+  #   kind: service
+  #   target: http://127.0.0.1:8900/
+  #   command: [uv, run, notes-graph, --port, "8900"]
+  #   circle: all
 
 server:
   host: 127.0.0.1       # loopback only — anything else refuses to start

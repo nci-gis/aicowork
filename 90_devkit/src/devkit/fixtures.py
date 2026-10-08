@@ -348,6 +348,25 @@ energy: 3
 """)
 
 # ---------------- triage inbox fixtures ----------------
+put("watch/watch.md", """
+---
+type: note
+visibility: private
+circle: work
+date: 2026-10-01
+status: active
+---
+# Topics to watch — Warehouse pilot
+
+<!-- One section per topic. The topic-watch skill reads queries, cadence (days) and last_run; it writes last_run only. -->
+
+## Warehouse management systems for small sites
+queries:
+- small warehouse management system 2026 review
+- WMS night shift usability
+cadence: 7
+last_run:
+""")
 put("inbox/2026-10-02_0915_dentist.txt", "Dentist appointment for Mai, Friday 2026-10-09 at 16:30, Dr. Nguyen's clinic.\n")
 put("inbox/2026-10-02_0920_forecast-reply.eml", """
 From: Minh Tran <minh.tran@example.com>

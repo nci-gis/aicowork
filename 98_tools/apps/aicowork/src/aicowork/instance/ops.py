@@ -30,6 +30,8 @@ TEMPLATE_DEST = {
     "practice": "08_practices/{slug}.md",
     "decision": "09_decisions/{date}_{slug}.md",
     "reminder": "10_reminders/{slug}.md",
+    "watch": "04_projects/{slug}/watch.md",
+    "watch-result": "05_results/{month}/{date}_{slug}-watch.md",
 }
 WEEKDAYS = {"en": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
             "vi": ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]}
@@ -81,7 +83,7 @@ def new(base, name, slug=None, date=None, lang=None, title=None):
     d = date or C.today()
     if "{slug}" in TEMPLATE_DEST[name] and not slug:
         raise ValueError(f"'{name}' needs --slug")
-    rel = TEMPLATE_DEST[name].format(date=d.isoformat(), week=iso_week(d), slug=slug or "")
+    rel = TEMPLATE_DEST[name].format(date=d.isoformat(), week=iso_week(d), slug=slug or "", month=d.strftime("%Y-%m"))
     p = Path(base) / rel
     p.parent.mkdir(parents=True, exist_ok=True)
     from aicowork_core.fsafe import exclusive_create

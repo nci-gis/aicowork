@@ -137,20 +137,63 @@ def cmd_reminders(args):
     from aicowork_core import common as C
     base = _base(args)
     cfg, _ = C.load_yaml(base / "aicowork.yaml")
+    weekly = args.week is not None                      # --week given, with or without a value
     week = args.week or ops.iso_week(dt.date.today())
     res = ops.reminder_week(base, week, cfg=cfg if isinstance(cfg, dict) else None)
     if args.json:
         print(_json.dumps(res, ensure_ascii=False, indent=1))
         return 0
     for r in res["rows"]:
-        extra = f"  missed this week: {r['missed_this_week']}" if args.week and r["missed_this_week"] is not None else ""
+        extra = f"  missed this week: {r['missed_this_week']}" if weekly and r["missed_this_week"] is not None else ""
         print(f"  {r['state']:<9} {r['path']}  last_done: {r['last_done'] or '-'}  missed: {r['missed']}{extra}")
     if not res["rows"]:
         print("  no active reminders")
-    if args.week:
+    if weekly:
         m = res["missed"] if res["missed"] is not None else "not computable (no git)"
         print(f"{week}: reminders done {res['done']} · overdue now {res['overdue']} · missed this week {m}")
     return 0
+
+
+def cmd_app(args):
+    """Start a registered service app (aicowork.yaml `apps`, kind: service, `command`)
+    from the owner's terminal: the process runs with cwd = the instance until Ctrl-C.
+    An agent session never starts one (decision kernel-host-viewer-and-apps)."""
+    import os
+    import subprocess
+    from aicowork_core import common as C
+    from aicowork_core.anchor import foreign_profile
+    base = _base(args)
+    cfg, err = C.load_yaml(base / "aicowork.yaml")
+    apps = [a for a in ((cfg or {}).get("apps") or []) if isinstance(a, dict)] if not err else []
+    if args.list or not args.id:
+        for a in apps:
+            run = " ".join(a["command"]) if isinstance(a.get("command"), list) else "-"
+            print(f"  {a.get('id'):<16} {a.get('kind'):<9} {a.get('target')}  {run}")
+        if not apps:
+            print("  no apps registered (aicowork.yaml: apps)")
+        return 0
+    app = next((a for a in apps if a.get("id") == args.id), None)
+    if app is None:
+        print(f"app: no app {args.id!r} in aicowork.yaml", file=sys.stderr)
+        return 2
+    if app.get("kind") != "service" or not isinstance(app.get("command"), list) or not app["command"]:
+        print(f"app: {args.id} is not a service with a command — open its target instead: {app.get('target')}", file=sys.stderr)
+        return 2
+    if os.environ.get("AICOWORK_AGENT"):
+        print("app: an agent session never starts an app — the owner runs `aicowork app` in their own terminal", file=sys.stderr)
+        return 2
+    reason = foreign_profile(base)
+    if reason and not args.here:
+        print(f"app: refused — {reason}; run it from the owner's terminal on the host (or pass --here if this IS that host)", file=sys.stderr)
+        return 2
+    print(f"app {args.id}: {' '.join(app['command'])}  (cwd = {base}; target {app.get('target')}; Ctrl-C stops it)")
+    try:
+        return subprocess.call([str(x) for x in app["command"]], cwd=str(base))
+    except FileNotFoundError as e:
+        print(f"app: cannot start — {e}", file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        return 0
 
 
 def register(add):
@@ -174,6 +217,10 @@ def register(add):
     p.add_argument("--title")
     p = add("today", cmd_today, "today's date, weekday, ISO week", base=False)
     p.add_argument("--week", action="store_true")
+    p = add("app", cmd_app, "start a registered service app from your terminal (aicowork.yaml apps: kind service, command)")
+    p.add_argument("id", nargs="?")
+    p.add_argument("--list", action="store_true")
+    p.add_argument("--here", action="store_true", help="this IS the owner's host (overrides the foreign-profile check)")
     p = add("reminders", cmd_reminders, "every active reminder and its state; --week: the weekly review's numbers")
     p.add_argument("--week", metavar="YYYY-Www", nargs="?", const="", help="ISO week (default: this week)")
     p.add_argument("--json", action="store_true")

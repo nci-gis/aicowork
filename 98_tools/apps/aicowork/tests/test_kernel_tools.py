@@ -426,7 +426,7 @@ def test_retention_report(inst):
 
 def test_skills_pack_stubs_point_into_folder(inst, tmp_path):
     zips = ops.skills_pack(inst, tmp_path / "s")
-    assert {z.stem for z in zips} == {"inbox-triage", "morning-brief", "weekly-review"}
+    assert {z.stem for z in zips} == {"inbox-triage", "morning-brief", "weekly-review", "topic-watch"}
     with zipfile.ZipFile(zips[0]) as z:
         stub = z.read(z.namelist()[0]).decode()
     assert "99_system/skills/" in stub and "## Procedure" not in stub
@@ -1271,9 +1271,72 @@ def test_reminders_week_counts_done_overdue_and_missed_from_git(inst, capsys):
     assert cli.main(["reminders", "--week", week, "--base", str(inst)]) == 0
     out = capsys.readouterr().out
     assert f"{week}: reminders done 1" in out and "missed this week 4" in out
+    assert cli.main(["reminders", "--week", "--base", str(inst)]) == 0        # the flag alone = this week (rc.6 fix)
+    assert f"{week}: reminders done 1" in capsys.readouterr().out
     # without git: not computable, never a guess
     shutil.rmtree(inst / ".git")
     res = ops.reminder_week(inst, week)
     assert res["missed"] is None and res["done"] == 1
     assert cli.main(["reminders", "--week", week, "--base", str(inst)]) == 0
     assert "not computable" in capsys.readouterr().out
+
+
+def test_topic_watch_templates_and_audit(inst):
+    """rc.6 (E9): `new watch` / `new watch-result` land where the convention says;
+    L3-WATCH scores a result note: sourced, untrusted, wrapped — or says what is missing."""
+    head = subprocess.run(["git", "-C", str(inst), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    w = ops.new(inst, "watch", slug="warehouse-pilot")
+    assert w == inst / "04_projects" / "warehouse-pilot" / "watch.md" and "cadence: 7" in C.read(w)
+    r = ops.new(inst, "watch-result", slug="warehouse-pilot-wms")
+    month = C.today().strftime("%Y-%m")
+    assert r == inst / "05_results" / month / f"{C.today().isoformat()}_warehouse-pilot-wms-watch.md"
+    text = C.read(r).replace("source: []", "source: [https://example.com/a]").replace("{{work|family|friend|health}}", "work")
+    r.write_text(text, encoding="utf-8")
+    f = audit.score_watch(inst, head)
+    assert not [x for x in f if x.case == "L3-WATCH"], f
+    # a note that concludes instead of sourcing is caught
+    bad = r.with_name(f"{C.today().isoformat()}_warehouse-pilot-bad-watch.md")
+    bad.write_text(text.replace("claim: sourced", "claim: stance").replace("trust: untrusted", "trust: reviewed")
+                   .replace("<<UNTRUSTED", "<<X").replace("<<END", "<<Y"), encoding="utf-8")
+    msgs = {x.message for x in audit.score_watch(inst, head) if x.case == "L3-WATCH" and x.path.endswith("bad-watch.md")}
+    assert msgs == {"claim must be sourced", "trust must be untrusted", "body must be wrapped in untrusted markers"}
+    # the task may write results, watch.md and INDEX — not a persona
+    (inst / "03_personas" / "x.md").write_text("---\ntype: persona\ncircle: work\ndate: 2026-01-01\n---\n# x\n", encoding="utf-8")
+    assert any(x.case == "AUDIT-SCOPE" and x.path == "03_personas/x.md" for x in audit.score_watch(inst, head))
+
+
+def test_service_app_command_is_validated_and_started_by_the_owner(inst, capsys, monkeypatch):
+    """rc.6 (E10): `command` only on kind: service, a list of words; `aicowork app <id>`
+    runs it from the owner's terminal (cwd = the instance) and never from an agent session."""
+    from aicowork import cli
+    from aicowork.conform import checks as ck
+    base_cfg = {"schema": 1, "kernel_version": "0.0.1-rc.6", "security": {"preset": "personal-simple", "policy": "policy.yaml"}}
+
+    def errs(**app):
+        return [e for e in ck.validate_config(dict(base_cfg, apps=[dict({"id": "x", "name": "X"}, **app)])) if "app x" in e]
+    assert errs(kind="service", target="http://127.0.0.1:8900/", command=["python3", "-c", "print(1)"]) == []
+    assert errs(kind="route", target="/x", command=["python3"])                      # route: no command
+    assert errs(kind="external", target="https://example.com", command=["python3"])
+    assert errs(kind="service", target="http://127.0.0.1:8900/", command="python3 -m x")   # a shell string: no
+    assert errs(kind="service", target="http://127.0.0.1:8900/", command=[])
+    # the command runs with cwd = the instance; its exit code is the command's
+    cfg = inst / "aicowork.yaml"
+    marker = "touched-by-app.txt"
+    cfg.write_text(C.read(cfg).rstrip("\n") + "\napps:\n  - id: dashboard\n    name: Dashboard\n    kind: route\n    target: /\n"
+                   "  - id: stub\n    name: Stub\n    kind: service\n"
+                   f"    target: http://127.0.0.1:8900/\n    command: [{sys.executable}, -c, \"open('{marker}','w').write('x')\"]\n",
+                   encoding="utf-8")
+    monkeypatch.setenv("AICOWORK_ANCHOR_DIR", str(inst.parent / "anchors"))     # the owner's host (foreign_profile: None)
+    monkeypatch.delenv("AICOWORK_AGENT", raising=False)
+    assert cli.main(["app", "--list", "--base", str(inst)]) == 0 and "stub" in capsys.readouterr().out
+    assert cli.main(["app", "stub", "--base", str(inst)]) == 0 and (inst / marker).is_file()
+    assert cli.main(["app", "nope", "--base", str(inst)]) == 2
+    assert cli.main(["app", "dashboard", "--base", str(inst)]) == 2                 # a route has no command
+    (inst / marker).unlink()
+    monkeypatch.setenv("AICOWORK_AGENT", "1")
+    assert cli.main(["app", "stub", "--base", str(inst)]) == 2 and not (inst / marker).exists()
+    monkeypatch.delenv("AICOWORK_AGENT", raising=False)
+    monkeypatch.delenv("AICOWORK_ANCHOR_DIR", raising=False)
+    monkeypatch.setenv("SANDBOX_RUNTIME", "1")                                      # not the owner's host
+    assert cli.main(["app", "stub", "--base", str(inst)]) == 2 and not (inst / marker).exists()
+    assert cli.main(["app", "stub", "--here", "--base", str(inst)]) == 0 and (inst / marker).is_file()

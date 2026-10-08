@@ -21,6 +21,7 @@ TASK_WRITES = {
                "09_decisions/**", "10_reminders/**", "INDEX.md"],
     "brief": ["06_logs/daily/**"],
     "weekly": ["06_logs/weekly/**"],
+    "watch": ["05_results/**", "04_projects/*/watch.md", "INDEX.md"],
 }
 
 
@@ -200,10 +201,36 @@ def score_weekly(base, since):
     return audit(base, since, task="weekly")
 
 
+def score_watch(base, since):
+    """L3-WATCH: every result note the run added is sourced, untrusted, wrapped (rc.6, E9)."""
+    base = Path(base)
+    f = audit(base, since, task="watch")
+    for ch in changes(base, since):
+        if ch.status not in ("A", "?") or not ch.path.startswith("05_results/") or not ch.path.endswith("-watch.md"):
+            continue
+        p = base / ch.path
+        if not p.is_file():
+            continue
+        meta, body, _ = C.frontmatter(p)
+        bad = []
+        if meta.get("claim") != "sourced":
+            bad.append("claim must be sourced")
+        if meta.get("trust") != "untrusted":
+            bad.append("trust must be untrusted")
+        src = meta.get("source")
+        if not src or (isinstance(src, list) and not any(str(x).strip() for x in src)):
+            bad.append("source must list the URLs")
+        if "<<UNTRUSTED id=" not in body or "<<END id=" not in body:
+            bad.append("body must be wrapped in untrusted markers")
+        for b in bad:
+            f.append(checks.Finding("error", "L3-WATCH", ch.path, b))
+    return f
+
+
 def _section(body, emoji):
     m = re.search(rf"^## {re.escape(emoji)}.*?$(.*?)(?=^## |\Z)", body, re.M | re.S)
     return m.group(1) if m else ""
 
 
-L3 = {"L3-TRIAGE": score_triage, "L3-BRIEF": score_brief, "L3-WEEKLY": score_weekly,
+L3 = {"L3-TRIAGE": score_triage, "L3-BRIEF": score_brief, "L3-WEEKLY": score_weekly, "L3-WATCH": score_watch,
       "L3-REDTEAM": lambda b, s: audit(b, s, task="triage")}

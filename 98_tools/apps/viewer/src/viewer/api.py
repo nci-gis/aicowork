@@ -142,6 +142,8 @@ def api_data():
                "max_events_per_day": MAX_EVENTS_PER_DAY,
                "lessons_shown": LESSONS_SHOWN},
         "inbox": scanner.scan_inbox(),
+        # pending triage plans an agent wrote and stopped at (rc.6, E7): the owner applies
+        "triage_plans": _triage_plans(),
         "counts": {k: counts.get(k, 0)
                    for k in list(CONTENT_FOLDERS) + ["log", "note", "decision", "reminder"]},
         "upcoming": upcoming,
@@ -281,6 +283,42 @@ def api_reminder_done(payload: DonePayload):
     store.sync()
     return {"ok": True, "last_done": done.isoformat(), "missed_added": inc, "missed": missed + inc,
             "mtime": p.stat().st_mtime}
+
+
+def _triage_plans():
+    from aicowork_core import triage_plan
+    return triage_plan.list_plans(BASE)
+
+
+@app.get("/api/triage/plans")
+def api_triage_plans():
+    return {"plans": _triage_plans()}
+
+
+class TriageAction(BaseModel):
+    name: str
+    action: str = "apply"           # apply | dismiss
+
+
+@app.post("/api/triage/apply")
+def api_triage_apply(payload: TriageAction):
+    """The owner applies (or dismisses) a pending plan under 06_logs/triage/: the same
+    rules as `aicowork triage --apply` (one code path, aicowork_core.triage_plan); the
+    plan file is kept, renamed *_applied.json or *_dismissed.json; the audit report is written."""
+    from aicowork_core import triage_plan
+    if payload.action not in ("apply", "dismiss"):
+        raise HTTPException(400, "action must be apply or dismiss")
+    try:
+        p = triage_plan.plan_path(BASE, payload.name)
+        if payload.action == "dismiss":
+            new = triage_plan.dismiss(BASE, p)
+            return {"ok": True, "action": "dismissed", "file": new.name}
+        moves, report = triage_plan.apply(BASE, p, do_apply=True)
+    except triage_plan.PlanError as e:
+        raise HTTPException(400, str(e))
+    store.sync()
+    return {"ok": True, "action": "applied", "moves": len(moves),
+            "report": report.relative_to(BASE).as_posix() if report else None}
 
 
 class QuickAdd(BaseModel):

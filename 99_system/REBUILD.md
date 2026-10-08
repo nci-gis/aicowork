@@ -25,7 +25,7 @@ A rebuild needs exactly these; everything else has a default in this file.
 
 ```
 00_inbox/  01_events/  02_emails/  03_personas/  04_projects/
-05_results/  06_logs/daily/  06_logs/weekly/  07_archive/
+05_results/  06_logs/daily/  06_logs/weekly/  06_logs/triage/  07_archive/
 08_practices/  09_decisions/  10_reminders/  07_archive/00_inbox-originals/  99_system/
 ```
 
@@ -50,20 +50,20 @@ Exactly as CONVENTIONS.md: folder table, filenames `YYYY-MM-DD_slug.md`, frontma
 
 ## 3. Kernel contents (`99_system/`)
 
-| Path                                            | Is                                                                                                                 |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `PHILOSOPHY.md`, `CONVENTIONS.md`, `REBUILD.md` | the trinity                                                                                                        |
-| `VERSION`                                       | kernel version, one line                                                                                           |
-| `host-contract.md`                              | the four things any host must provide                                                                              |
-| `instruction-file.md`                           | cold-start text every session reads first                                                                          |
-| `schemas/`                                      | JSON Schemas: frontmatter, `aicowork.yaml`, `policy.yaml`, `module.yaml`                                           |
-| `templates/<lang>/`                             | one template per content type; the kernel ships `en` (other languages come as modules)                             |
-| `skills/<name>/SKILL.md`                        | procedures an agent follows, each with an **Acceptance** section: `inbox-triage`, `morning-brief`, `weekly-review` |
-| `tasks/<name>.md`                               | scheduled-task specs; a host's scheduled prompt is one line pointing at one of these                               |
-| `modules/<name>/`                               | modules shipped with the kernel (`7habits`)                                                                        |
-| `presets/`                                      | `policy.yaml` presets                                                                                              |
-| `aicowork.example.yaml`                         | instance config example                                                                                            |
-| `conformance/`                                  | the suite that defines "proper"                                                                                    |
+| Path                                            | Is                                                                                                                                |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `PHILOSOPHY.md`, `CONVENTIONS.md`, `REBUILD.md` | the trinity                                                                                                                       |
+| `VERSION`                                       | kernel version, one line                                                                                                          |
+| `host-contract.md`                              | the four things any host must provide                                                                                             |
+| `instruction-file.md`                           | cold-start text every session reads first                                                                                         |
+| `schemas/`                                      | JSON Schemas: frontmatter, `aicowork.yaml`, `policy.yaml`, `module.yaml`                                                          |
+| `templates/<lang>/`                             | one template per content type; the kernel ships `en` (other languages come as modules)                                            |
+| `skills/<name>/SKILL.md`                        | procedures an agent follows, each with an **Acceptance** section: `inbox-triage`, `morning-brief`, `weekly-review`, `topic-watch` |
+| `tasks/<name>.md`                               | scheduled-task specs; a host's scheduled prompt is one line pointing at one of these                                              |
+| `modules/<name>/`                               | modules shipped with the kernel (`7habits`)                                                                                       |
+| `presets/`                                      | `policy.yaml` presets                                                                                                             |
+| `aicowork.example.yaml`                         | instance config example                                                                                                           |
+| `conformance/`                                  | the suite that defines "proper"                                                                                                   |
 
 ## 4. Skills
 
@@ -71,7 +71,7 @@ Every skill is a Markdown procedure with Agent Skills frontmatter (`name` = fold
 
 ## 5. Scheduled work
 
-A ritual that should run on a schedule (morning brief, weekly review) is a **task spec** in `99_system/tasks/`: what to read, what to write, whether it needs the local folder (device-bound), and why it is safe to run twice (idempotent). The host's scheduled prompt is a single line: "Read `99_system/tasks/<name>.md` in the connected folder and follow it."
+A ritual that should run on a schedule (morning brief, weekly review, topic watch) is a **task spec** in `99_system/tasks/`: what to read, what to write, whether it needs the local folder (device-bound), and why it is safe to run twice (idempotent). The host's scheduled prompt is a single line: "Read `99_system/tasks/<name>.md` in the connected folder and follow it."
 
 ## 6. Checks after a rebuild
 
