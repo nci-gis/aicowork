@@ -426,7 +426,7 @@ def test_retention_report(inst):
 
 def test_skills_pack_stubs_point_into_folder(inst, tmp_path):
     zips = ops.skills_pack(inst, tmp_path / "s")
-    assert {z.stem for z in zips} == {"inbox-triage", "morning-brief", "weekly-review"}
+    assert {z.stem for z in zips} == {"inbox-triage", "morning-brief", "weekly-review", "topic-watch"}
     with zipfile.ZipFile(zips[0]) as z:
         stub = z.read(z.namelist()[0]).decode()
     assert "99_system/skills/" in stub and "## Procedure" not in stub
@@ -1277,3 +1277,27 @@ def test_reminders_week_counts_done_overdue_and_missed_from_git(inst, capsys):
     assert res["missed"] is None and res["done"] == 1
     assert cli.main(["reminders", "--week", week, "--base", str(inst)]) == 0
     assert "not computable" in capsys.readouterr().out
+
+
+def test_topic_watch_templates_and_audit(inst):
+    """rc.6 (E9): `new watch` / `new watch-result` land where the convention says;
+    L3-WATCH scores a result note: sourced, untrusted, wrapped — or says what is missing."""
+    head = subprocess.run(["git", "-C", str(inst), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    w = ops.new(inst, "watch", slug="warehouse-pilot")
+    assert w == inst / "04_projects" / "warehouse-pilot" / "watch.md" and "cadence: 7" in C.read(w)
+    r = ops.new(inst, "watch-result", slug="warehouse-pilot-wms")
+    month = C.today().strftime("%Y-%m")
+    assert r == inst / "05_results" / month / f"{C.today().isoformat()}_warehouse-pilot-wms-watch.md"
+    text = C.read(r).replace("source: []", "source: [https://example.com/a]").replace("{{work|family|friend|health}}", "work")
+    r.write_text(text, encoding="utf-8")
+    f = audit.score_watch(inst, head)
+    assert not [x for x in f if x.case == "L3-WATCH"], f
+    # a note that concludes instead of sourcing is caught
+    bad = r.with_name(f"{C.today().isoformat()}_warehouse-pilot-bad-watch.md")
+    bad.write_text(text.replace("claim: sourced", "claim: stance").replace("trust: untrusted", "trust: reviewed")
+                   .replace("<<UNTRUSTED", "<<X").replace("<<END", "<<Y"), encoding="utf-8")
+    msgs = {x.message for x in audit.score_watch(inst, head) if x.case == "L3-WATCH" and x.path.endswith("bad-watch.md")}
+    assert msgs == {"claim must be sourced", "trust must be untrusted", "body must be wrapped in untrusted markers"}
+    # the task may write results, watch.md and INDEX — not a persona
+    (inst / "03_personas" / "x.md").write_text("---\ntype: persona\ncircle: work\ndate: 2026-01-01\n---\n# x\n", encoding="utf-8")
+    assert any(x.case == "AUDIT-SCOPE" and x.path == "03_personas/x.md" for x in audit.score_watch(inst, head))
