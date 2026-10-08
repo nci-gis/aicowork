@@ -1,6 +1,6 @@
 [project]
 name = "aicowork-viewer"
-version = "0.0.1rc4"
+version = "0.0.1rc5"
 description = "AI-Cowork local viewer: dashboard, search, calendar, light editing. Loopback only. Built on the shared library aicowork_core."
 readme = "README.md"
 requires-python = ">=3.11"
