@@ -137,17 +137,18 @@ def cmd_reminders(args):
     from aicowork_core import common as C
     base = _base(args)
     cfg, _ = C.load_yaml(base / "aicowork.yaml")
+    weekly = args.week is not None                      # --week given, with or without a value
     week = args.week or ops.iso_week(dt.date.today())
     res = ops.reminder_week(base, week, cfg=cfg if isinstance(cfg, dict) else None)
     if args.json:
         print(_json.dumps(res, ensure_ascii=False, indent=1))
         return 0
     for r in res["rows"]:
-        extra = f"  missed this week: {r['missed_this_week']}" if args.week and r["missed_this_week"] is not None else ""
+        extra = f"  missed this week: {r['missed_this_week']}" if weekly and r["missed_this_week"] is not None else ""
         print(f"  {r['state']:<9} {r['path']}  last_done: {r['last_done'] or '-'}  missed: {r['missed']}{extra}")
     if not res["rows"]:
         print("  no active reminders")
-    if args.week:
+    if weekly:
         m = res["missed"] if res["missed"] is not None else "not computable (no git)"
         print(f"{week}: reminders done {res['done']} · overdue now {res['overdue']} · missed this week {m}")
     return 0

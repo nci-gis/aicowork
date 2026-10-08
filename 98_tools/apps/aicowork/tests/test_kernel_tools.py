@@ -1271,6 +1271,8 @@ def test_reminders_week_counts_done_overdue_and_missed_from_git(inst, capsys):
     assert cli.main(["reminders", "--week", week, "--base", str(inst)]) == 0
     out = capsys.readouterr().out
     assert f"{week}: reminders done 1" in out and "missed this week 4" in out
+    assert cli.main(["reminders", "--week", "--base", str(inst)]) == 0        # the flag alone = this week (rc.6 fix)
+    assert f"{week}: reminders done 1" in capsys.readouterr().out
     # without git: not computable, never a guess
     shutil.rmtree(inst / ".git")
     res = ops.reminder_week(inst, week)
