@@ -25,7 +25,7 @@ A rebuild needs exactly these; everything else has a default in this file.
 
 ```
 00_inbox/  01_events/  02_emails/  03_personas/  04_projects/
-05_results/  06_logs/daily/  06_logs/weekly/  07_archive/
+05_results/  06_logs/daily/  06_logs/weekly/  06_logs/triage/  07_archive/
 08_practices/  09_decisions/  10_reminders/  07_archive/00_inbox-originals/  99_system/
 ```
 
