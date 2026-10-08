@@ -2,6 +2,16 @@
 
 `aicowork upgrade <release.zip> --expect-sha256 <published sha256>` shows the diff; `--apply` installs it (clean git tree required; a bundle is taken first; removed files go to `07_archive/`; instance files are never touched except `kernel_version` in `aicowork.yaml`). The tools never fetch: you download or clone the release yourself, then point `upgrade` at it. Each section below lists what **you** must change in the instance by hand for that version — `upgrade` prints it and does not do it.
 
+## 0.0.1-rc.6
+
+No action is required. Three things you may want:
+
+1. Restart the viewer once: its cache rebuilds by itself (schema 5 → 6).
+2. A project you want watched gets a `watch.md` (`aicowork new watch --slug <project>`): topics, queries, cadence. The `topic-watch` task needs a host with a search tool.
+3. A service you start by hand can be registered under `apps:` with `kind: service`, its loopback `target` and a `command` (a list of words); `aicowork app <id>` starts it from your terminal. The example in `99_system/aicowork.example.yaml` shows the shape.
+
+The first triage plan creates `06_logs/triage/`; nothing to create by hand.
+
 ## 0.0.1-rc.5
 
 No action is required. Two things you may want:

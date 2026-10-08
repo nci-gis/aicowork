@@ -47,6 +47,9 @@ const ACT = {
   cancelEdit:  () => cancelEdit(),
   save:        () => saveItem(),
   remDone:     el => reminderDone(el.dataset.path, +el.dataset.mtime),
+  openCtx:     (el, e) => { e.stopPropagation(); openItem(el.dataset.path, true); },
+  planApply:   el => triagePlan(el.dataset.name, 'apply'),
+  planDismiss: el => triagePlan(el.dataset.name, 'dismiss'),
 };
 const ON_CHANGE = { search: () => doSearch(), vis: el => visPick(el.value) };
 const ON_INPUT = { search: () => onSearchInput() };
@@ -194,8 +197,8 @@ function renderToday(){
     html += '<div class="up-group">On this day</div><ul class="plain">' + otd.map(i => `
       <li data-act="open" data-path="${esc(i.path)}"><div class="li-top">
         ${visBadge(i.visibility)}<span class="badge">${i.months_ago} month${i.months_ago>1?'s':''} ago</span>
-        <span class="when">${esc(i.date)}</span>
-      </div><div class="li-title">${esc(i.title)}</div></li>`).join('') + '</ul>';
+        <span class="when">${esc(i.date)}</span>${i.kind==='lesson' ? lessonCtx(i) : ''}
+      </div><div class="li-title">${i.kind==='lesson' ? '🎓 ' : ''}${esc(i.title)}</div></li>`).join('') + '</ul>';
   $('today').innerHTML = html;
 }
 
@@ -243,8 +246,8 @@ function renderApps(){
     .map(a => a.kind==='route'
       ? `<button class="app-tile" data-act="tab" data-tab="${a.target==='/'?'dash':'browse'}">
            <span class="app-name">${esc(a.name)}</span><span class="app-kind">${esc(a.kind)}</span></button>`
-      : `<a class="app-tile" href="${esc(a.target)}" target="_blank" rel="noopener">
-           <span class="app-name">${esc(a.name)}</span><span class="app-kind">${esc(a.kind)} ↗</span></a>`)
+      : `<a class="app-tile" href="${esc(a.target)}" target="_blank" rel="noopener" ${a.kind==='service'&&a.command?`title="${esc(t('app.start', {id: a.id}))}"`:''}>
+           <span class="app-name">${esc(a.name)}</span><span class="app-kind">${esc(a.kind)} ↗${a.kind==='service'&&a.command?' · '+esc(t('app.start', {id: a.id})):''}</span></a>`)
     .join('') || '<div class="empty">Add apps under apps: in aicowork.yaml — one entry per tool.</div>';
 }
 
@@ -302,6 +305,10 @@ function renderRail(){
 
 function toggleLessons(){ lessonsAll = !lessonsAll; renderLessons(); }
 
+// a lesson's [context] that names a file opens that file (E8); the click must not bubble to the lesson's own row
+const lessonCtx = l => l.context
+  ? ` <span class="badge link" data-act="openCtx" data-path="${esc(l.context)}" title="${esc(l.context)}">📎 ${esc(l.context.split('/').pop())}</span>` : '';
+
 function renderLessons(){
   const all = DATA.lessons, cap = ui('lessons_shown', 3);
   const total = DATA.lessons_total != null ? DATA.lessons_total : all.length;
@@ -325,7 +332,7 @@ function renderLessons(){
   targets.forEach(el => el.innerHTML =
     '<ul class="plain">' + rows.map(l => `
         <li data-act="open" data-path="${esc(l.path)}">
-          <div class="li-top"><span class="when">${esc(l.date)}</span></div>
+          <div class="li-top"><span class="when">${esc(l.date)}</span>${lessonCtx(l)}</div>
           <div class="li-title">${esc(l.text)}</div></li>`).join('') + '</ul>' + toggle);
 }
 
@@ -396,10 +403,10 @@ function renderDash(){
 
   showMonth();
 
-  $('inbox').innerHTML = d.inbox.length
+  $('inbox').innerHTML = (d.inbox.length
     ? d.inbox.map(f => `<div class="file">${esc(f)}</div>`).join('') +
       `<div class="hint">Say “triage my inbox” in an agent session.</div>`
-    : `<div class="empty">${esc(t('inbox_empty'))}</div>`;
+    : `<div class="empty">${esc(t('inbox_empty'))}</div>`) + renderTriagePlans(d.triage_plans || []);
 
   $('results').innerHTML = d.results.length
     ? d.results.map(r => `<div class="file ${r.is_md?'link':''}"
@@ -614,6 +621,34 @@ function remBadge(e){
 // Done only where a window is open now: on an upcoming one it would change nothing
 const remDoneBtn = e => e.state==='due' || e.state==='overdue'
   ? `<button class="rem-done" data-act="remDone" data-path="${esc(e.path)}" data-mtime="${esc(e.mtime)}">${esc(t('rem.done'))}</button>` : '';
+/* ---------- triage plans: the agent proposed, the owner applies (rc.6, E7) ---------- */
+function renderTriagePlans(plans){
+  if (!plans.length) return '';
+  return plans.map(p => `<div class="plan"><div class="up-group">${esc(t('plan.title', {name: p.name}))}</div>` +
+    (p.error ? `<div class="empty">${esc(t('plan.error'))}: ${esc(p.error)}</div>` :
+      '<ul class="plain">' + p.moves.map(m => `<li><div class="li-top"><span class="badge">${esc(m.type||'note')}</span>` +
+        `<span class="dot" style="background:${CIRCLE_COLOR[m.circle]||'var(--muted)'}"></span></div>` +
+        `<div class="li-title">${esc(m.from)} → ${esc(m.to)}</div>${m.note?`<div class="hint">${esc(m.note)}</div>`:''}</li>`).join('') + '</ul>') +
+    `<div class="plan-actions">${p.error ? '' : `<button class="btn primary" data-act="planApply" data-name="${esc(p.name)}">${esc(t('plan.apply'))}</button>`}` +
+    `<button class="btn" data-act="planDismiss" data-name="${esc(p.name)}">${esc(t('plan.dismiss'))}</button></div></div>`).join('');
+}
+
+async function triagePlan(name, action){
+  const btns = [...document.querySelectorAll(`[data-name="${CSS.escape(name)}"]`)];
+  if (btns.some(b => b.disabled)) return;
+  btns.forEach(b => { b.disabled = true; });
+  let r;
+  try {
+    r = await fetch('/api/triage/apply', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, action }) });
+  } catch(e){ btns.forEach(b => { b.disabled = false; }); toast(t('load_failed'), 'err'); return; }
+  if (!r.ok){ let m=''; try { m=(await r.json()).detail||'' } catch(_){}
+              btns.forEach(b => { b.disabled = false; }); toast(t('plan.failed') + ' ('+r.status+') '+m, 'err'); return }
+  let res = {}; try { res = await r.json(); } catch(_){}
+  toast(action === 'apply' ? '✓ ' + t('plan.applied', {n: res.moves || 0}) : t('plan.dismissed'));
+  load();
+}
+
 async function reminderDone(path, mtime){
   // one request at a time per button: a second click would only earn a 409
   const btns = [...document.querySelectorAll(`.rem-done[data-path="${CSS.escape(path)}"]`)];

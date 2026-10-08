@@ -150,7 +150,7 @@ One visible file at the instance root (example: `99_system/aicowork.example.yaml
 - `kernel_version` — the kernel this instance was built against
 - `language` — `chat` (languages the AI may answer in, first = default), `content` (default body language of new notes), `ui`, and `modules` (language per shipped part, e.g. `99_system: en`, `templates: en`; the kernel ships English only — the body of a note keeps whatever language it is written in). Where a skill writes `templates/<lang>/`, `<lang>` is `language.modules.templates`.
 - `modules` — enabled module names
-- `apps` — launchable apps (id, name, kind: route|service|external, target, circle)
+- `apps` — launchable apps (id, name, kind: route|service|external, target, circle; a `service` may carry `command`, what `aicowork app <id>` starts from the owner's terminal — never an agent). A result an app writes carries `source: app:<id>` (decision kernel-host-viewer-and-apps)
 - runtime knobs for tools (`server`, `dashboard`, `cadence`)
 - `security` — the preset and the path of `policy.yaml`
 

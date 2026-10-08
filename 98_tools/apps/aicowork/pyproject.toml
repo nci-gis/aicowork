@@ -1,6 +1,6 @@
 [project]
 name = "aicowork"
-version = "0.0.1rc5"
+version = "0.0.1rc6"
 description = "AI-Cowork command line: create and check an instance, egress gate, upgrade. Standard library only (plus aicowork-core)."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -356,3 +356,11 @@ li.task.done{ color:var(--muted); text-decoration:line-through }
   font-size:12.5px; padding:0 2px; cursor:pointer; border-radius:4px }
 .vis-ctl select option { background:var(--surface); color:var(--ink) }
 .vis-ctl .btn { padding:2px 8px; font-size:12px; margin-left:4px }
+
+/* triage plans (rc.6) */
+.plan { margin-top:10px; padding-top:8px; border-top:1px dashed var(--ring) }
+.plan-actions { display:flex; gap:8px; margin-top:6px }
+.plan-actions .btn:disabled { opacity:.5; cursor:wait }
+
+.badge.link { cursor:pointer; margin-left:6px }
+.badge.link:hover { color:var(--accent); border-color:var(--accent) }

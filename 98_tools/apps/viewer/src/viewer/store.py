@@ -17,7 +17,7 @@ from .config import DATA_DIR, DB_PATH
 _lock = threading.Lock()
 _db = None
 
-SCHEMA_VERSION = 5   # bump when columns change; cache is dropped & rebuilt  (4: +visibility; 5: +repeat, days, last_done)
+SCHEMA_VERSION = 6   # bump when columns change; cache is dropped & rebuilt  (4: +visibility; 5: +repeat, days, last_done; 6: lessons.context)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS files(
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS files(
 );
 CREATE VIRTUAL TABLE IF NOT EXISTS docs USING fts5(path UNINDEXED, title, body);
 CREATE TABLE IF NOT EXISTS lessons(
-  path TEXT NOT NULL, date TEXT, text TEXT NOT NULL
+  path TEXT NOT NULL, date TEXT, text TEXT NOT NULL, context TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_files_kind ON files(kind);
 CREATE INDEX IF NOT EXISTS idx_files_date ON files(date);
@@ -85,8 +85,8 @@ def sync():
             con.execute("INSERT INTO docs VALUES (?,?,?)",
                         (p, row["title"], row["body"]))
             con.execute("DELETE FROM lessons WHERE path=?", (p,))
-            con.executemany("INSERT INTO lessons VALUES (?,?,?)",
-                            [(p, d, txt) for d, txt in row["lessons"]])
+            con.executemany("INSERT INTO lessons VALUES (?,?,?,?)",
+                            [(p, d, txt, ctx) for d, txt, ctx in row["lessons"]])
         con.commit()
         return {"updated": len(dirty), "removed": len(stale), "total": len(disk)}
 
@@ -271,10 +271,10 @@ def q_stats(since_date):
 
 def recent_lessons(limit=30):
     rows = db().execute(
-        "SELECT l.date, l.text, l.path, f.circle FROM lessons l "
+        "SELECT l.date, l.text, l.path, f.circle, l.context FROM lessons l "
         "LEFT JOIN files f ON f.path = l.path "
         "ORDER BY (l.date=''), l.date DESC LIMIT ?", (limit,)).fetchall()
-    return [dict(zip(("date", "text", "path", "circle"), r)) for r in rows]
+    return [dict(zip(("date", "text", "path", "circle", "context"), r)) for r in rows]
 
 
 def lessons_total():
@@ -299,6 +299,12 @@ def on_this_day(today):
         for r in db().execute(
                 f"SELECT {COLS} FROM files WHERE date = ? AND kind != 'note'", (d,)):
             out.append(dict(_row(r), months_ago=months))
+        # lessons of that day too (E8): a lesson resurfaces with its source
+        for date, text, path, circle, ctx in db().execute(
+                "SELECT l.date, l.text, l.path, f.circle, l.context FROM lessons l "
+                "LEFT JOIN files f ON f.path = l.path WHERE l.date = ?", (d,)):
+            out.append({"path": path, "kind": "lesson", "title": text, "circle": circle, "visibility": "private",
+                        "date": date, "time": None, "status": None, "tags": [], "context": ctx, "months_ago": months})
     return out
 
 
