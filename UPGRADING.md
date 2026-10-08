@@ -2,6 +2,13 @@
 
 `aicowork upgrade <release.zip> --expect-sha256 <published sha256>` shows the diff; `--apply` installs it (clean git tree required; a bundle is taken first; removed files go to `07_archive/`; instance files are never touched except `kernel_version` in `aicowork.yaml`). The tools never fetch: you download or clone the release yourself, then point `upgrade` at it. Each section below lists what **you** must change in the instance by hand for that version — `upgrade` prints it and does not do it.
 
+## 0.0.1-rc.5
+
+No action is required. Two things you may want:
+
+1. Add `notice: <days>` to a reminder that deserves a longer (or shorter) warning than the dashboard horizon — a yearly renewal, say `notice: 30`. Leave it empty and nothing changes.
+2. The weekly review template now has `Reminders done / overdue / missed`; existing weekly files are not touched. The number needs git history (`aicowork reminders --week` prints it); without git the review says "not computable".
+
 ## 0.0.1-rc.4
 
 A new content type, **reminders**: dated duties that repeat (CONVENTIONS "Reminders").

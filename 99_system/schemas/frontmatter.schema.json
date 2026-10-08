@@ -26,6 +26,7 @@
              "x-by-repeat": {"weekly": "mon|tue|wed|thu|fri|sat|sun", "monthly": "1..31", "yearly": "MM-DD, a real date (02-29 allowed)"}},
     "last_done": {"type": ["string", "null"], "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"},
     "missed": {"type": ["integer", "string", "null"], "pattern": "^\\d*$", "x-note": "reference count added by Done; never an input to the state"},
+    "notice": {"type": ["integer", "string", "null"], "pattern": "^\\d*$", "x-note": "days before `first` an upcoming window is shown; empty = the dashboard horizon"},
     "revisit": {"type": "string"},
     "derived_from": {"type": ["array", "string"]},
     "created_by": {"enum": ["human", "agent"]},

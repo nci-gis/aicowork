@@ -58,10 +58,11 @@ def no_network(monkeypatch):
                         lambda host, *a, **k: (_ for _ in ()).throw(AssertionError(f"dns {host}")))
 
 
-def test_commands_run_offline(no_network, tmp_path):
+def test_commands_run_offline(no_network, tmp_path, monkeypatch):
     from aicowork.conform import checks
-    from aicowork.instance import ops
+    from aicowork.instance import ops, anchor
     from aicowork.egress import gate as egress
+    monkeypatch.setenv("AICOWORK_ANCHOR_DIR", str(tmp_path / "anchors"))
     repo = TOOLS.parent
     base = tmp_path / "i"
     shutil.copytree(repo / "99_system" / "conformance" / "fixtures" / "example-instance", base)
@@ -69,6 +70,7 @@ def test_commands_run_offline(no_network, tmp_path):
     checks.run(base, level=2)
     ops.reach(base)
     ops.new(base, "daily-log")
+    anchor.anchor(base)                       # a dry run runs the binding gate too (C34)
     egress.export(base, "share-public", dry_run=True)
     from aicowork_core import manifest
     manifest.write(base / "99_system")
