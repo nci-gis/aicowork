@@ -1301,3 +1301,40 @@ def test_topic_watch_templates_and_audit(inst):
     # the task may write results, watch.md and INDEX — not a persona
     (inst / "03_personas" / "x.md").write_text("---\ntype: persona\ncircle: work\ndate: 2026-01-01\n---\n# x\n", encoding="utf-8")
     assert any(x.case == "AUDIT-SCOPE" and x.path == "03_personas/x.md" for x in audit.score_watch(inst, head))
+
+
+def test_service_app_command_is_validated_and_started_by_the_owner(inst, capsys, monkeypatch):
+    """rc.6 (E10): `command` only on kind: service, a list of words; `aicowork app <id>`
+    runs it from the owner's terminal (cwd = the instance) and never from an agent session."""
+    from aicowork import cli
+    from aicowork.conform import checks as ck
+    base_cfg = {"schema": 1, "kernel_version": "0.0.1-rc.6", "security": {"preset": "personal-simple", "policy": "policy.yaml"}}
+
+    def errs(**app):
+        return [e for e in ck.validate_config(dict(base_cfg, apps=[dict({"id": "x", "name": "X"}, **app)])) if "app x" in e]
+    assert errs(kind="service", target="http://127.0.0.1:8900/", command=["python3", "-c", "print(1)"]) == []
+    assert errs(kind="route", target="/x", command=["python3"])                      # route: no command
+    assert errs(kind="external", target="https://example.com", command=["python3"])
+    assert errs(kind="service", target="http://127.0.0.1:8900/", command="python3 -m x")   # a shell string: no
+    assert errs(kind="service", target="http://127.0.0.1:8900/", command=[])
+    # the command runs with cwd = the instance; its exit code is the command's
+    cfg = inst / "aicowork.yaml"
+    marker = "touched-by-app.txt"
+    cfg.write_text(C.read(cfg).rstrip("\n") + "\napps:\n  - id: dashboard\n    name: Dashboard\n    kind: route\n    target: /\n"
+                   "  - id: stub\n    name: Stub\n    kind: service\n"
+                   f"    target: http://127.0.0.1:8900/\n    command: [{sys.executable}, -c, \"open('{marker}','w').write('x')\"]\n",
+                   encoding="utf-8")
+    monkeypatch.setenv("AICOWORK_ANCHOR_DIR", str(inst.parent / "anchors"))     # the owner's host (foreign_profile: None)
+    monkeypatch.delenv("AICOWORK_AGENT", raising=False)
+    assert cli.main(["app", "--list", "--base", str(inst)]) == 0 and "stub" in capsys.readouterr().out
+    assert cli.main(["app", "stub", "--base", str(inst)]) == 0 and (inst / marker).is_file()
+    assert cli.main(["app", "nope", "--base", str(inst)]) == 2
+    assert cli.main(["app", "dashboard", "--base", str(inst)]) == 2                 # a route has no command
+    (inst / marker).unlink()
+    monkeypatch.setenv("AICOWORK_AGENT", "1")
+    assert cli.main(["app", "stub", "--base", str(inst)]) == 2 and not (inst / marker).exists()
+    monkeypatch.delenv("AICOWORK_AGENT", raising=False)
+    monkeypatch.delenv("AICOWORK_ANCHOR_DIR", raising=False)
+    monkeypatch.setenv("SANDBOX_RUNTIME", "1")                                      # not the owner's host
+    assert cli.main(["app", "stub", "--base", str(inst)]) == 2 and not (inst / marker).exists()
+    assert cli.main(["app", "stub", "--here", "--base", str(inst)]) == 0 and (inst / marker).is_file()

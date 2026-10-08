@@ -209,6 +209,13 @@ def validate_config(cfg):
                 errs.append(f"app {a['id']}: a service target is a loopback http(s) URL")
             elif a["kind"] == "external" and not re.match(r"^https?://", t, re.I):
                 errs.append(f"app {a['id']}: an external target is an http(s) URL")
+            # `command` (rc.6): only a service has one; a list of words, never a shell string
+            if "command" in a:
+                cmd = a["command"]
+                if a["kind"] != "service":
+                    errs.append(f"app {a['id']}: command is for kind: service only")
+                elif not isinstance(cmd, list) or not cmd or not all(isinstance(x, str) and x.strip() for x in cmd):
+                    errs.append(f"app {a['id']}: command is a non-empty list of strings")
     srv = cfg.get("server") or {}
     if srv.get("host", "127.0.0.1") not in ("127.0.0.1", "localhost", "::1"):
         errs.append("server.host must be a loopback address")

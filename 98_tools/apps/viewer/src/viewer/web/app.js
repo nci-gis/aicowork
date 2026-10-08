@@ -246,8 +246,8 @@ function renderApps(){
     .map(a => a.kind==='route'
       ? `<button class="app-tile" data-act="tab" data-tab="${a.target==='/'?'dash':'browse'}">
            <span class="app-name">${esc(a.name)}</span><span class="app-kind">${esc(a.kind)}</span></button>`
-      : `<a class="app-tile" href="${esc(a.target)}" target="_blank" rel="noopener">
-           <span class="app-name">${esc(a.name)}</span><span class="app-kind">${esc(a.kind)} ↗</span></a>`)
+      : `<a class="app-tile" href="${esc(a.target)}" target="_blank" rel="noopener" ${a.kind==='service'&&a.command?`title="${esc(t('app.start', {id: a.id}))}"`:''}>
+           <span class="app-name">${esc(a.name)}</span><span class="app-kind">${esc(a.kind)} ↗${a.kind==='service'&&a.command?' · '+esc(t('app.start', {id: a.id})):''}</span></a>`)
     .join('') || '<div class="empty">Add apps under apps: in aicowork.yaml — one entry per tool.</div>';
 }
 

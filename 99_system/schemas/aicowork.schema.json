@@ -27,7 +27,8 @@
           "id": {"type": "string"}, "name": {"type": "string"},
           "kind": {"enum": ["route", "service", "external"]},
           "target": {"type": "string"},
-          "circle": {"enum": ["all", "work", "family", "friend", "health"]}
+          "circle": {"enum": ["all", "work", "family", "friend", "health"]},
+          "command": {"type": "array", "items": {"type": "string"}, "x-note": "kind: service only — what `aicowork app <id>` runs, from the owner's terminal, cwd = the instance"}
         }
       }
     },

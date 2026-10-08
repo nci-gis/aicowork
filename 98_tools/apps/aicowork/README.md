@@ -29,6 +29,7 @@ Every command belongs to one of three groups (`aicowork --help` shows them, and 
 | `aicowork inbox "note"`      | drops a raw text note into `00_inbox/`                                                                 |
 | `aicowork ingest` / `triage` | quarantines untrusted inbox text; checks (or `--apply`s) a triage move plan                            |
 | `aicowork new` / `today`     | a note from a template in your language; today's date, weekday and ISO week                            |
+| `aicowork app <id>`          | starts a registered service app (`apps:` kind `service` with `command`) from your terminal; `--list`   |
 | `aicowork reminders`         | every active reminder and its state; `--week` adds done / overdue / missed this week (missed from git) |
 | `aicowork viz` / `shortcut`  | starts the viewer app (`../viewer/`, needs `uv`); a Desktop shortcut for it (Windows)                  |
 

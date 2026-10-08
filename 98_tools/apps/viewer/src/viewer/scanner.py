@@ -182,5 +182,6 @@ def load_registry():
     """Apps from the instance's aicowork.yaml `apps:` (PHILOSOPHY #4); the two
     built-in routes when the instance lists none."""
     from .config import APPS
-    apps = [{k: str(v) for k, v in a.items()} for a in APPS] or DEFAULT_APPS
+    # `command` never reaches the page: the tile only needs to know one exists (rc.6)
+    apps = [{k: (bool(v) if k == "command" else str(v)) for k, v in a.items()} for a in APPS] or DEFAULT_APPS
     return [a for a in apps if a.get("id") and a.get("name")]

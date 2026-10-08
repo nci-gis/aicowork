@@ -28,6 +28,7 @@
   "inbox_empty": "Empty — all triaged ✓",
   "no_results": "No results yet — they land in 05_results/.",
   "kind.reminder": "Reminder",
+  "app.start": "start it: aicowork app {id}",
   "plan.title": "Triage plan {name} — the agent proposed, you decide",
   "plan.apply": "Apply",
   "plan.dismiss": "Dismiss",
