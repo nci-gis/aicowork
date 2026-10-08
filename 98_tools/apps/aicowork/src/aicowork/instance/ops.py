@@ -14,6 +14,7 @@ from aicowork_core import common as C
 from aicowork.egress import gate as egress
 from aicowork_core import manifest
 from aicowork.instance import anchor
+from aicowork_core.frontmatter import md_title, parse_frontmatter
 
 from aicowork_core.config import release_root  # noqa: E402
 TOOL_KERNEL = (release_root() or Path(".")) / "99_system"   # the kernel this tool ships with
@@ -591,3 +592,63 @@ def doctor(base, quick=False):
                  if (base / f).is_file()) + len(C.read(C.kernel_dir(base) / "CONVENTIONS.md"))
     out.append(("ok" if budget < 60_000 else "warn", "cold-start", f"{budget:,} bytes read at session start"))
     return out
+
+
+# ---------------- reminders: the weekly numbers (rc.5, E4) ----------------
+
+def week_bounds(week):
+    """'YYYY-Www' -> (monday, sunday)."""
+    y, w = week.split("-W")
+    mon = dt.date.fromisocalendar(int(y), int(w), 1)
+    return mon, mon + dt.timedelta(days=6)
+
+
+def _missed_at(base, rel, before):
+    """`missed` of a reminder as of the last commit before `before` (a date), from
+    git; None when git cannot say (no git, no commit, file absent then)."""
+    rc, sha = C.git(base, "rev-list", "-1", f"--before={before.isoformat()}T00:00:00", "HEAD", "--", rel)
+    sha = sha.strip()
+    if rc or not sha:
+        return 0 if C.is_git(base) and not rc else None       # created this week: counts from 0
+    rc, text = C.git(base, "show", f"{sha}:{rel}")
+    if rc:
+        return None
+    parsed = parse_frontmatter(text)
+    meta = parsed[0] if isinstance(parsed, tuple) else parsed
+    v = str((meta or {}).get("missed") or "0").strip()
+    return int(v) if v.isdigit() else 0
+
+
+def reminder_week(base, week, cfg=None):
+    """The weekly review's reminder numbers for ISO week `week`:
+    {"done": n, "overdue": n, "missed": n | None, "rows": [...]} — `missed` is the
+    delta of the cumulative `missed` field since the week's start, read from git
+    (CONVENTIONS rule 9: the field is never recomputed); None = not computable."""
+    base = Path(base)
+    mon, sun = week_bounds(week)
+    rows, done, missed, computable = [], 0, 0, C.is_git(base)
+    today = C.today()
+    states = {rel: s for rel, _, s in reminder_states(base, today=today, cfg=cfg)}
+    for p in C.iter_md(base, ("10_reminders",)):
+        meta, body, _ = C.frontmatter(p)
+        if meta.get("type") != "reminder" or str(meta.get("status") or "active").strip() != "active":
+            continue
+        rel = C.rel(base, p)
+        ld = str(meta.get("last_done") or "").strip()
+        was_done = bool(ld) and mon.isoformat() <= ld <= sun.isoformat()
+        done += was_done
+        now = str(meta.get("missed") or "0").strip()
+        now = int(now) if now.isdigit() else 0
+        delta = None
+        if computable:
+            before = _missed_at(base, rel, mon)
+            if before is None:
+                computable = False
+            else:
+                delta = max(now - before, 0)
+                missed += delta
+        s = states.get(rel) or {}
+        rows.append({"path": rel, "title": md_title(body, p.stem), "state": s.get("state", "-"),
+                     "last_done": ld, "missed": now, "done_this_week": was_done, "missed_this_week": delta})
+    overdue = sum(1 for s in states.values() if s.get("state") == "overdue")
+    return {"week": week, "done": done, "overdue": overdue, "missed": missed if computable else None, "rows": rows}

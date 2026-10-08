@@ -1238,3 +1238,42 @@ def test_symlink_reported_not_followed(inst, tmp_path):
     out = Path(res["out"])
     assert not (out / "05_results" / "link.md").exists() and not (out / "05_results" / "inner.md").exists()
     assert "secret outside" not in "".join(C.read(p) for p in out.rglob("*.md"))
+
+
+def test_reminders_week_counts_done_overdue_and_missed_from_git(inst, capsys):
+    """rc.5 (E4): the weekly review's reminder numbers. `missed` stays cumulative in
+    the file; the week's delta is read from git, never recomputed."""
+    import datetime as dt
+    from aicowork import cli
+    from aicowork_core.frontmatter import set_field
+    rem = inst / "10_reminders" / "renew-parking-permit.md"
+    week = ops.iso_week(C.today())
+    mon, _ = ops.week_bounds(week)
+    # a commit before the week: missed 2, not done
+    rem.write_text(set_field(set_field(C.read(rem), "missed", "2"), "last_done", ""), encoding="utf-8")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "add", "-A")
+    before = (mon - dt.timedelta(days=1)).isoformat() + "T12:00:00"
+    subprocess.run(["git", "-C", str(inst), "-c", "user.email=t@example.com", "-c", "user.name=t",
+                    "commit", "-qm", "before the week", f"--date={before}"], check=True, capture_output=True,
+                   env={**os.environ, "GIT_COMMITTER_DATE": before})
+    # inside the week: done late, and three more windows passed
+    rem.write_text(set_field(set_field(C.read(rem), "missed", "5"), "last_done", mon.isoformat()), encoding="utf-8")
+    new = inst / "10_reminders" / "new-this-week.md"
+    new.write_text(C.read(rem).replace("missed: 5", "missed: 1").replace(f"last_done: {mon.isoformat()}", "last_done:"),
+                   encoding="utf-8")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "add", "-A")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "in the week")
+    res = ops.reminder_week(inst, week)
+    assert res["done"] == 1 and res["missed"] == 3 + 1          # 5-2 for the old one, 1-0 for the new one
+    by = {r["path"]: r for r in res["rows"]}
+    assert by["10_reminders/renew-parking-permit.md"]["missed_this_week"] == 3
+    assert by["10_reminders/new-this-week.md"]["missed_this_week"] == 1
+    assert cli.main(["reminders", "--week", week, "--base", str(inst)]) == 0
+    out = capsys.readouterr().out
+    assert f"{week}: reminders done 1" in out and "missed this week 4" in out
+    # without git: not computable, never a guess
+    shutil.rmtree(inst / ".git")
+    res = ops.reminder_week(inst, week)
+    assert res["missed"] is None and res["done"] == 1
+    assert cli.main(["reminders", "--week", week, "--base", str(inst)]) == 0
+    assert "not computable" in capsys.readouterr().out

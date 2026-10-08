@@ -13,7 +13,7 @@ Physical: · Mental: · Social: · Spiritual:
 
 ## 📊 Numbers
 <!-- The morning brief / a tool may pre-fill this block; the sections below it are the owner's judgment. -->
-Daily logs: /7 · Reflects filled: /7 · Energy avg: /5 · Overdue contacts: · Reminders done / overdue: / · Inbox untriaged:<!-- module:7habits --> · Q2 share: %<!-- /module -->
+Daily logs: /7 · Reflects filled: /7 · Energy avg: /5 · Overdue contacts: · Reminders done / overdue / missed: / / · Inbox untriaged:<!-- module:7habits --> · Q2 share: %<!-- /module -->
 
 ## ⚖️ Circle balance this week
 | Circle | Time & energy | Highlight | Debt |
