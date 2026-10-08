@@ -205,3 +205,25 @@ def test_done_increment(last_done, done, expected):
     from aicowork_core.recur import done_increment
     r = parse_rule(meta(date="2026-08-01", last_done=last_done))
     assert done_increment(r, D(done)) == expected
+
+
+def test_notice_overrides_the_horizon_for_upcoming():
+    """CONVENTIONS rule 8: `notice` sets how many days ahead an upcoming window is
+    shown; missing = the dashboard horizon; never changes due, overdue, expired."""
+    m = meta(days=("20",), notice=3)
+    assert st(m, "2026-10-10", horizon=14) is None                      # 10 days ahead > notice 3
+    assert st(m, "2026-10-17", horizon=14)["state"] == "upcoming"       # exactly 3 days ahead
+    assert st(m, "2026-10-17", horizon=0)["state"] == "upcoming"        # notice wins over a short horizon
+    long = meta(days=("20",), notice=60)
+    assert st(long, "2026-10-10", horizon=14)["days_left"] == 10        # longer than the horizon: shown
+    zero = meta(days=("20",), notice=0)
+    assert st(zero, "2026-10-19") is None and st(zero, "2026-10-20")["state"] == "due"
+    assert st(m, "2026-10-21")["state"] == "overdue"                    # notice never changes overdue
+    assert st(meta(days=("20",), notice=""), "2026-10-10")["days_left"] == 10   # empty = horizon
+
+
+def test_notice_invalid_is_a_conformance_error():
+    assert any("notice" in x for x in validate(meta(notice="soon")))
+    assert any("notice" in x for x in validate(meta(notice=-1)))
+    assert parse_rule(meta(notice="soon")) is None
+    assert parse_rule(meta(notice=5)).notice == 5 and parse_rule(meta()).notice is None

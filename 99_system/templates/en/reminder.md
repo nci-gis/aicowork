@@ -8,6 +8,7 @@ repeat: {{weekly|monthly|yearly}}
 days: [{{mon…sun | 1…31 | "MM-DD"}}]
 last_done:
 missed: 0
+notice:
 status: active
 ---
 # {{What to do}}
