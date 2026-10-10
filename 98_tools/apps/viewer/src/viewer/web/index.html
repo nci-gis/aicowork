@@ -24,6 +24,10 @@
     <h3 data-i18n="side.circles">Circles</h3>
     <div id="side-circles" class="pills"></div>
   </div>
+  <div class="side-sec">
+    <h3>Tags</h3>
+    <div id="side-tags" class="pills"></div>
+  </div>
   <div class="side-foot" id="side-foot"></div>
 </aside>
 
@@ -84,6 +88,9 @@
           <option value="">Any status</option>
           <option>upcoming</option><option>active</option><option>paused</option><option>done</option><option>archived</option>
         </select>
+        <select id="f-tag" data-change="search" title="Items carrying this tag">
+          <option value="">All tags</option>
+        </select>
         <span class="count" id="rcount"></span>
       </div>
       <div id="rlist"></div>
@@ -117,6 +124,7 @@
     <button class="btn" data-act="close">✕</button>
   </div>
   <div class="dr-meta" id="dr-meta"></div>
+  <div class="dr-related" id="dr-related" hidden></div>
   <div class="dr-body" id="dr-body"></div>
   <textarea id="editor" spellcheck="false"></textarea>
   <div class="dr-foot" id="dr-foot" style="display:none">

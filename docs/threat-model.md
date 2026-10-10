@@ -2,7 +2,6 @@
 
 _Moved here from `SECURITY.md` on 2026-10-10: the root page states what is claimed and not claimed; this page is the one-page model behind it. Threat numbers are referenced from other documents; they do not change._
 
-
 **Assets**: work data (possibly confidential), family and personal data, the egress policy, personas, skills and instruction files (they steer the agent), the receipt log, git history.
 
 **Actors**: the owner; an external sender of mail or documents (**the main threat**); authors of malicious skills, plugins or dependencies; a web page open in the owner's browser (attacks on localhost); another local process; a mistaken or manipulated agent.

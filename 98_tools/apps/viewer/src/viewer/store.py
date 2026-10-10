@@ -17,7 +17,7 @@ from .config import DATA_DIR, DB_PATH
 _lock = threading.Lock()
 _db = None
 
-SCHEMA_VERSION = 6   # bump when columns change; cache is dropped & rebuilt  (4: +visibility; 5: +repeat, days, last_done; 6: lessons.context)
+SCHEMA_VERSION = 7   # bump when columns change; cache is dropped & rebuilt  (4: +visibility; 5: +repeat, days, last_done; 6: lessons.context; 7: +related)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS files(
@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS files(
   energy   INTEGER, q INTEGER,
   q1 INTEGER DEFAULT 0, q2 INTEGER DEFAULT 0,
   q3 INTEGER DEFAULT 0, q4 INTEGER DEFAULT 0,
-  repeat   TEXT, days TEXT, last_done TEXT
+  repeat   TEXT, days TEXT, last_done TEXT,
+  related  TEXT
 );
 CREATE VIRTUAL TABLE IF NOT EXISTS docs USING fts5(path UNINDEXED, title, body);
 CREATE TABLE IF NOT EXISTS lessons(
@@ -73,14 +74,14 @@ def sync():
             kind, mtime_ns, size = disk[p]
             row = scanner.parse_file(p, kind)
             con.execute(
-                "REPLACE INTO files VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "REPLACE INTO files VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (p, mtime_ns, size, row["kind"], row["title"], row["circle"],
                  row["visibility"],
                  row["date"], row["time"], row["status"], row["tags"],
                  row["cadence"], row["last_contact"], row["role"], row["until"],
                  row["energy"], row["q"],
                  row["q1"], row["q2"], row["q3"], row["q4"],
-                 row["repeat"], row["days"], row["last_done"]))
+                 row["repeat"], row["days"], row["last_done"], row.get("related", "")))
             con.execute("DELETE FROM docs WHERE path=?", (p,))
             con.execute("INSERT INTO docs VALUES (?,?,?)",
                         (p, row["title"], row["body"]))
@@ -130,6 +131,59 @@ def search(q):
         d["snippet"] = security.safe_snippet(r[9])
         out.append(d)
     return out
+
+
+def _split(csv):
+    return [t for t in (csv or "").split(",") if t]
+
+
+def tag_counts():
+    """Every tag with how many items carry it, open and in all — the sidebar's Tags
+    section and the Browse filter (Round 002). Most open first."""
+    from aicowork_core.common import is_open
+    con = db()
+    counts = {}
+    for tags, status in con.execute("SELECT tags, status FROM files WHERE tags != ''"):
+        for t in set(_split(tags)):
+            c = counts.setdefault(t, {"tag": t, "open": 0, "all": 0})
+            c["all"] += 1
+            c["open"] += 1 if is_open(status) else 0
+    return sorted(counts.values(), key=lambda c: (-c["open"], -c["all"], c["tag"]))
+
+
+def related(path, limit=20):
+    """Items linked to `path`: what its `related:` points at, what points at it, and
+    open items sharing a tag (newest first). Each row says why."""
+    from aicowork_core.common import is_open
+    con = db()
+    me = con.execute("SELECT tags, related FROM files WHERE path=?", (path,)).fetchone()
+    if not me:
+        return []
+    my_tags, my_rel = set(_split(me[0])), _split(me[1])
+    rows = con.execute(f"SELECT {COLS}, related FROM files WHERE path != ? AND (tags != '' OR related != '')",
+                       (path,)).fetchall()
+    by_path = {r[0]: r for r in rows}
+    out, seen = [], {path}
+
+    def add(r, why):
+        d = _row(r[:-1])
+        if d["path"] not in seen:
+            seen.add(d["path"])
+            d["why"] = why
+            out.append(d)
+    for p in my_rel:
+        if p in by_path:
+            add(by_path[p], "related:")
+        elif p not in seen:
+            seen.add(p)
+            out.append({"path": p, "kind": None, "title": p, "status": None, "date": None, "tags": [], "why": "related: — not found"})
+    for r in rows:
+        if path in _split(r[-1]):
+            add(r, "points here")
+    shared = [(r, my_tags & set(_split(r[8]))) for r in rows]
+    for r, s in sorted((x for x in shared if x[1] and is_open(x[0][7])), key=lambda x: (x[0][5] or ""), reverse=True):
+        add(r, "#" + " #".join(sorted(s)))
+    return out[:limit]
 
 
 def open_counts():

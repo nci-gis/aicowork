@@ -11,6 +11,7 @@ from collections import namedtuple
 from pathlib import Path
 
 from aicowork_core import common as C
+from aicowork_core import tags
 from aicowork_core.contract import CIRCLES
 from aicowork_core.frontmatter import parse_frontmatter_strict
 from aicowork_core.contract import is_archived_kernel
@@ -324,6 +325,9 @@ def l1_frontmatter(base):
             continue
         for level, msg in check_frontmatter(meta, has):
             out.append(Finding(level, "L1-FRONTMATTER", C.rel(base, p), msg))
+        for t in tags.bad_tags(meta):      # a tag is a slug, so a grep finds it the way the viewer does (Round 002)
+            out.append(Finding("warn", "L1-FRONTMATTER", C.rel(base, p),
+                               f"tag {t!r} is not a slug (lower-case letters, digits, hyphens)"))
     for p in C.iter_md(base, ("05_results",)):
         meta, _, has = C.frontmatter(p)
         if not has:

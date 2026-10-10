@@ -7,7 +7,8 @@
 1. **Run `aicowork anchor` on your own computer once more**: the trust anchor now binds `allow_tokens` in `03_personas/me.md` beside `check_tokens`. Until you do, `doctor` and the viewer report drift on `03_personas/me.md#allow_tokens`; egress is not stopped by it.
 2. If you used `allow_tokens:` to let one of your explicit `check_tokens` through, it no longer does — the field silences only names the deny-list derived from persona titles and project slugs. Remove the explicit token from `check_tokens` instead, if that was the intent.
 3. Create `06_logs/triage/` (with a `.gitkeep`) if your instance predates rc.6's plans: conformance L1-SKELETON checks it now.
-4. The viewer's Browse now shows open items by default; an item you are finished with needs `status: done` (or `archived`, `cancelled`, `superseded`, `deferred`) to leave the default view and the sidebar counts. Nothing to restart: the cache already holds `status`.
+4. Restart the viewer once: its cache rebuilds by itself (schema 6 → 7, `related:` joins the index). Tags are now the link between items: `tags: [a-slug]` on two notes links them, `related: [path]` points explicitly; the sidebar, the Browse filter and each item's "Related" strip read them, `aicowork tags` lists them. Nothing to add by hand — notes without tags behave as before.
+5. The viewer's Browse now shows open items by default; an item you are finished with needs `status: done` (or `archived`, `cancelled`, `superseded`, `deferred`) to leave the default view and the sidebar counts. Nothing to restart: the cache already holds `status`.
 
 ## 0.0.1-rc.6
 

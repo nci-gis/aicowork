@@ -86,3 +86,9 @@ The kernel stays within its budget (9,966 of 10,000 words).
 **Source**: owner, in session — "open r002 for the new feat?" after agreeing that classification and linking is a feature for after 0.0.1; and "verbose → docs" for every root document.
 **Rationale**: opening a round is a human call (PDCA): `cycles/Round_002.md` is drafted at the owner's request with status Planning and no start date; it starts when Round 001 is Complete. The CHANGELOG's older sections moved to `docs/releases/0.0.1-rc.N.md` verbatim, with the short form at the root; SECURITY's threat model moved to `docs/threat-model.md` with a pointer; CONTRIBUTING states the rule.
 **Promoted by**: the owner (instruction in session), carried out by the agent
+
+## 2026-10-10: Round 001 Complete; Round 002 In Progress; both in 0.0.1-rc.7 → `plan/`
+
+**Source**: owner, in session — "Flip r001 to complete. Then start r002. I wanna both rounds release in v0.0.1-rc.7".
+**Rationale**: closing a round and starting one are human calls (PDCA); the owner made both. Round 001's steps 5 and 9 move to the release track (`v0.0.1-plan.md` R3, R6) and gate the final 0.0.1. Round 002 (tags as the link between items) ships in the rc.7 candidate at the owner's decision, noted against the fixed point's "features come after" in both files.
+**Promoted by**: the owner (instruction in session), carried out by the agent

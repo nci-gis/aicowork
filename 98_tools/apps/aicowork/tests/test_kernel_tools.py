@@ -1438,3 +1438,26 @@ def test_allow_tokens_is_bound_to_the_anchor(inst):
     me.write_text(C.read(me).replace("check_tokens: [", "allow_tokens: [warehouse]\ncheck_tokens: [", 1), encoding="utf-8")
     assert steering_drift(inst) == ("drift", ["03_personas/me.md#allow_tokens"])
     assert {lvl for lvl, m in anchor.check_anchor(inst) if "allow_tokens" in m} == {"warn"}
+
+
+# ---------------- Round 002: tags are the link ----------------
+
+def test_tags_table_counts_open_items_and_a_bad_tag_warns(inst, capsys):
+    """`aicowork tags` is the files-only view of what the viewer's sidebar shows; a tag
+    that is not a slug cannot be grepped the way the viewer reads it, so L1 warns."""
+    import argparse
+    from aicowork_core import tags
+    from aicowork.commands import daily
+    (inst / "09_decisions" / "2026-10-10_desk.md").write_text(
+        "---\ntype: decision\nvisibility: private\ncircle: health\ndate: 2026-10-10\nstatus: decided\ntags: [standing-desk, health-routine]\n---\n# Desk\n", encoding="utf-8")
+    (inst / "01_events" / "2026-10-11_desk-delivery.md").write_text(
+        "---\ntype: event\nvisibility: private\ncircle: health\ndate: 2026-10-11\nstatus: done\ntags: [standing-desk]\n---\n# Delivery\n", encoding="utf-8")
+    rows = {r["tag"]: r for r in tags.tag_table(inst)}
+    assert rows["standing-desk"] == {"tag": "standing-desk", "open": 1, "all": 2}
+    assert rows["health-routine"]["open"] == 1
+    assert daily.cmd_tags(argparse.Namespace(base=str(inst), json=False)) == 0
+    assert "standing-desk" in capsys.readouterr().out
+    (inst / "01_events" / "2026-10-12_bad.md").write_text(
+        "---\ntype: event\nvisibility: private\ncircle: work\ndate: 2026-10-12\ntags: [Standing Desk]\n---\n# Bad tag\n", encoding="utf-8")
+    f = checks.l1_frontmatter(inst)
+    assert any(x.level == "warn" and "not a slug" in x.message and x.path.endswith("2026-10-12_bad.md") for x in f), f

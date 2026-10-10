@@ -1,9 +1,9 @@
 # Round 001: Close 0.0.1 — the gates, not features
 
-**Status**: In Progress
+**Status**: Complete
 **Part of**: [v0.0.1-plan.md](../v0.0.1-plan.md), release-candidate track R3–R6
 **Date started**: 2026-10-09
-**Date completed**: —
+**Date completed**: 2026-10-10 — closed by the owner. Steps 5 (the non-expert tester, gate G5) and 9 (version, package, tag, publish) are not done here: they move to the release track in `v0.0.1-plan.md` and gate the final 0.0.1, not this round. What this round built ships in 0.0.1-rc.7 together with Round 002.
 
 ## Goal
 

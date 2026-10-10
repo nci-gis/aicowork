@@ -150,6 +150,8 @@ def api_data():
                    for k in list(CONTENT_FOLDERS) + ["log", "note", "decision", "reminder"]},
         "counts_all": {k: counts.get(k, 0)
                        for k in list(CONTENT_FOLDERS) + ["log", "note", "decision", "reminder"]},
+        "tags": store.tag_counts(),          # Round 002: tags are the link and the group
+
         "upcoming": upcoming,
         "reminders": reminders,
         # the calendar's current month ±1, so the first paint needs no second request (D7)
@@ -183,11 +185,13 @@ def api_data():
 
 
 @app.get("/api/search")
-def api_search(q: str = "", kind: str = "", circle: str = "", status: str = ""):
+def api_search(q: str = "", kind: str = "", circle: str = "", status: str = "", tag: str = ""):
     store.sync()
     results = store.search(q[:200]) if q.strip() else store.all_items()
     if kind:
         results = [r for r in results if r["kind"] == kind]
+    if tag:
+        results = [r for r in results if tag in r["tags"]]
     if circle:
         results = [r for r in results if r["circle"] == circle]
     if status == "open":            # the default: not done/archived/cancelled/superseded/deferred
@@ -211,10 +215,12 @@ def api_item(path: str):
     html = re.sub(r"<li>\[ \]", '<li class="task"><input type="checkbox">', html)
     html = re.sub(r"<li>\[[xX]\]", '<li class="task done"><input type="checkbox" checked>', html)
     rel_root = path.replace("\\", "/").split("/")[0]
+    store.sync()
     return {
         "path": path,
         "title": scanner.md_title(body, p.stem),
         "meta": meta,
+        "related": store.related(path.replace("\\", "/")),
         "raw": raw,
         "html": html,
         "mtime": p.stat().st_mtime,

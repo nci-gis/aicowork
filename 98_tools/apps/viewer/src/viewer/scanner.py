@@ -25,7 +25,7 @@ def disk_state():
     return state
 
 
-LIST_FIELDS = {"tags", "days"}
+LIST_FIELDS = {"tags", "days", "related"}
 
 
 def _s(v):
@@ -58,6 +58,10 @@ def parse_file(rel, default_kind):
         "time": meta.get("time") or None,
         "status": meta.get("status") or None,
         "tags": ",".join(str(t) for t in meta.get("tags")) if isinstance(meta.get("tags"), list) else "",
+        # `related:` — the explicit pointer (a path or a list); tags and related
+        # together are the link between items (Round 002)
+        "related": ",".join(str(t) for t in (meta.get("related") if isinstance(meta.get("related"), list)
+                                              else [meta.get("related")] if meta.get("related") else [])),
         # v1.2 fields (see 99_system/CONVENTIONS.md)
         "cadence": meta.get("cadence") or None,
         "until": str(meta.get("until")) if meta.get("until") else None,
