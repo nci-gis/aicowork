@@ -8,7 +8,7 @@ At the start of every session, in this order:
 
 1. Read `INDEX.md` (the live catalog) and `aicowork.yaml` (language, modules, apps). Answer in the first language of `language.chat` unless the owner writes in another listed one.
 2. Read `99_system/CONVENTIONS.md` before creating or moving any file. Read `99_system/PHILOSOPHY.md` before any trade-off.
-3. If a tool runner is available, run its health check (reference tools: `aicowork doctor --quick`; without installs, `98_tools/README.md` says how) and mention any warning. If none is available, continue with files only.
+3. If a tool runner is available, run its health check (reference tools: `aicowork doctor --quick`, or the launcher at the folder root, `./aicowork.sh doctor --quick` / `aicowork.bat doctor --quick`; without installs, `98_tools/README.md` says how) and mention any warning. If none is available, continue with files only.
 4. If `00_inbox/` holds files other than `README.md` / `.gitkeep`, offer to triage (`99_system/skills/inbox-triage/SKILL.md`).
 
 Always:

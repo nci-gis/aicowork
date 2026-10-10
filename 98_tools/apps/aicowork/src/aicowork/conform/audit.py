@@ -146,16 +146,28 @@ def audit(base, since, task=None, allow=()):
 
 # ---------------- L3 scoring (after an agent ran a skill) ----------------
 
+def _planned_sources(base):
+    """Inbox items a pending plan under 06_logs/triage/ names as sources: the agent
+    stopped and left them for the owner, so they are not "left" by the session."""
+    from aicowork_core import triage_plan
+    out = set()
+    for row in triage_plan.list_plans(base):
+        out.update(m["from"] for m in row["moves"] if m.get("from"))
+    return out
+
+
 def score_triage(base, since):
     base = Path(base)
     f = audit(base, since, task="triage")
-    left = [p.name for p in (base / "00_inbox").iterdir() if p.is_file() and p.name not in C.SKIP_NAMES] \
+    planned = _planned_sources(base)        # a session may end with a plan for the owner (skill, Acceptance)
+    left = [p.name for p in (base / "00_inbox").iterdir()
+            if p.is_file() and p.name not in C.SKIP_NAMES and C.rel(base, p) not in planned] \
         if (base / "00_inbox").is_dir() else []
     if left:
         f.append(checks.Finding("error", "L3-TRIAGE", "00_inbox", f"{len(left)} item(s) left: {', '.join(left[:5])}"))
     idx = C.read(base / "INDEX.md")
     m = re.search(r"^Last triage:\s*(\d{4}-\d{2}-\d{2})", idx, re.M)
-    if not m or m.group(1) != C.today().isoformat():
+    if (not m or m.group(1) != C.today().isoformat()) and not planned:
         f.append(checks.Finding("error", "L3-TRIAGE", "INDEX.md", "Last triage footer is not today"))
     log = base / "06_logs" / "daily" / f"{C.today().isoformat()}.md"
     if log.is_file():

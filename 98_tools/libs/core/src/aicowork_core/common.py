@@ -25,8 +25,8 @@ REQUIRED_BY_TYPE = {
     "reminder": ("circle", "date", "repeat", "days"),
 }
 SKELETON = ("00_inbox", "01_events", "02_emails", "03_personas", "04_projects",
-            "05_results", "06_logs/daily", "06_logs/weekly", "07_archive",
-            "08_practices", "09_decisions", "10_reminders", "99_system")   # 99_system last
+            "05_results", "06_logs/daily", "06_logs/weekly", "06_logs/triage", "07_archive",
+            "08_practices", "09_decisions", "10_reminders", "99_system")   # 99_system last; REBUILD §1's list
 # Frontmatter is checked in these folders (07_archive is retired material; 05_results
 # holds deliverables of any format; 06_logs/<reports> are tool output).
 FM_FOLDERS = ("01_events", "02_emails", "03_personas", "04_projects",
@@ -323,7 +323,10 @@ def deny_list(base, projects=True):
                 if len(part) >= 4 and not part.isdigit():
                     src.setdefault(part, f"project slug part {d.name}")
 
-    allow = allow_tokens(base)
+    # `allow_tokens` silences only what this function derived (a title word, a slug
+    # part); the owner's explicit `check_tokens` and the Name/Org line stay denied
+    # whatever it says — a field an agent can write must not widen what may leave
+    allow = allow_tokens(base) - explicit - {t for t, where in src.items() if where.startswith("me.md ")}
     tokens = {t for t in src if t.lower() not in GENERIC_WORDS and t not in allow and len(t) >= 3}
     # the kernel's own fictional example instance is public by construction: its
     # names are never a leak (so the suite can use it as a stand-in owner)

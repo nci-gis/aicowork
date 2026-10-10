@@ -2,6 +2,7 @@
 """Devkit tests: release artifacts, the leak gate, the development repository's
 tree scan, and installing a built release (upgrade). Each test works on a temp
 copy of the fictional example instance checked together with this kernel."""
+import re
 import json
 import os
 import shutil
@@ -445,6 +446,9 @@ def test_preflight_refuses_versions_that_disagree(inst, tmp_path):
     probs = package.version_problems(base)
     assert any("pyproject.toml" in p and "0.0.1rc9" in p for p in probs)
     assert any(p.startswith("98_tools/uv.lock") for p in probs)
+    assert any(p.startswith("99_system/aicowork.example.yaml") for p in probs)   # REBUILD §1 copies it (2026-10-09)
+    example = base / "99_system" / "aicowork.example.yaml"
+    example.write_text(re.sub(r"(?m)^kernel_version:.*$", "kernel_version: 0.0.1-rc.9", C.read(example)), encoding="utf-8")
     for f in (base / "98_tools").glob("**/pyproject.toml"):
         if ".venv" not in f.parts:
             f.write_text(C.read(f).replace(f'version = "{package._pep440(VERSION)}"', 'version = "0.0.1rc9"'), encoding="utf-8")
@@ -453,3 +457,16 @@ def test_preflight_refuses_versions_that_disagree(inst, tmp_path):
     lock = base / "98_tools" / "uv.lock"
     lock.write_text(C.read(lock).replace(f'version = "{package._pep440(VERSION)}"', 'version = "0.0.1rc9"'), encoding="utf-8")
     assert package.version_problems(base) == []
+
+
+def test_version_problems_flag_a_stale_example_config(tmp_path):
+    """REBUILD §1: a rebuilt instance sets `kernel_version` to VERSION from the example
+    config; the example said rc.2 at rc.6 (rebuild drill, 2026-10-09)."""
+    from devkit import package
+    k = tmp_path / "99_system"
+    k.mkdir()
+    (k / "VERSION").write_text("0.0.1-rc.6\n", encoding="utf-8")
+    (k / "aicowork.example.yaml").write_text("kernel_version: 0.0.1-rc.2\nlanguage: en\n", encoding="utf-8")
+    assert any("aicowork.example.yaml: kernel_version 0.0.1-rc.2" in p for p in package.version_problems(tmp_path))
+    (k / "aicowork.example.yaml").write_text("kernel_version: 0.0.1-rc.6\nlanguage: en\n", encoding="utf-8")
+    assert package.version_problems(tmp_path) == []

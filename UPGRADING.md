@@ -2,6 +2,12 @@
 
 `aicowork upgrade <release.zip> --expect-sha256 <published sha256>` shows the diff; `--apply` installs it (clean git tree required; a bundle is taken first; removed files go to `07_archive/`; instance files are never touched except `kernel_version` in `aicowork.yaml`). The tools never fetch: you download or clone the release yourself, then point `upgrade` at it. Each section below lists what **you** must change in the instance by hand for that version — `upgrade` prints it and does not do it.
 
+## Unreleased (the next candidate)
+
+1. **Run `aicowork anchor` on your own computer once more**: the trust anchor now binds `allow_tokens` in `03_personas/me.md` beside `check_tokens`. Until you do, `doctor` and the viewer report drift on `03_personas/me.md#allow_tokens`; egress is not stopped by it.
+2. If you used `allow_tokens:` to let one of your explicit `check_tokens` through, it no longer does — the field silences only names the deny-list derived from persona titles and project slugs. Remove the explicit token from `check_tokens` instead, if that was the intent.
+3. Create `06_logs/triage/` (with a `.gitkeep`) if your instance predates rc.6's plans: conformance L1-SKELETON checks it now.
+
 ## 0.0.1-rc.6
 
 No action is required. Three things you may want:
@@ -10,7 +16,7 @@ No action is required. Three things you may want:
 2. A project you want watched gets a `watch.md` (`aicowork new watch --slug <project>`): topics, queries, cadence. The `topic-watch` task needs a host with a search tool.
 3. A service you start by hand can be registered under `apps:` with `kind: service`, its loopback `target` and a `command` (a list of words); `aicowork app <id>` starts it from your terminal. The example in `99_system/aicowork.example.yaml` shows the shape.
 
-The first triage plan creates `06_logs/triage/`; nothing to create by hand.
+Create `06_logs/triage/` (with a `.gitkeep`): REBUILD §1 lists it, so conformance L1-SKELETON checks it (the first plan would otherwise create it, but the check does not wait for that).
 
 ## 0.0.1-rc.5
 

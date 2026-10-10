@@ -1032,9 +1032,14 @@ def test_doctor_counts_due_and_overdue_reminders(inst, monkeypatch):
 
 
 def test_triage_may_file_into_reminders(inst):
-    (inst / "00_inbox" / "fri.txt").write_text("every Friday send the weekly status\n", encoding="utf-8")
-    plan = {"moves": [{"from": "00_inbox/fri.txt", "to": "10_reminders/weekly-status.md"}]}
+    (inst / "00_inbox" / "fri.md").write_text(
+        "---\ntype: reminder\nvisibility: private\ncircle: work\ndate: 2026-10-03\nrepeat: weekly\ndays: [fri]\n---\n"
+        "every Friday send the weekly status\n", encoding="utf-8")
+    plan = {"moves": [{"from": "00_inbox/fri.md", "to": "10_reminders/weekly-status.md"}]}
     assert triage.check_plan(inst, plan)
+    with pytest.raises(triage.PlanError, match="no frontmatter"):          # a raw line is not a reminder yet
+        (inst / "00_inbox" / "fri.txt").write_text("every Friday send the weekly status\n", encoding="utf-8")
+        triage.check_plan(inst, {"moves": [{"from": "00_inbox/fri.txt", "to": "10_reminders/weekly-status.md"}]})
 
 
 # ---------------- the policy is bound to the trust anchor (rc.4 red-team K) ----------------
@@ -1340,3 +1345,96 @@ def test_service_app_command_is_validated_and_started_by_the_owner(inst, capsys,
     monkeypatch.setenv("SANDBOX_RUNTIME", "1")                                      # not the owner's host
     assert cli.main(["app", "stub", "--base", str(inst)]) == 2 and not (inst / marker).exists()
     assert cli.main(["app", "stub", "--here", "--base", str(inst)]) == 0 and (inst / marker).is_file()
+
+
+def test_sbom_out_creates_the_parent_folder(tmp_path):
+    """`aicowork sbom --out dist/sbom.cdx.json` on a fresh checkout: `dist/` does not
+    exist yet (CI's first run tracebacked here)."""
+    import argparse
+    from aicowork.commands import check
+    out = tmp_path / "dist" / "sbom.cdx.json"
+    assert check.cmd_sbom(argparse.Namespace(base=str(REPO), out=str(out))) == 0
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert doc["components"], "the SBOM lists the tools' packages"
+
+
+def test_init_next_steps_name_the_launcher_and_the_git_identity(tmp_path, capsys):
+    """What `init` prints is the first thing a new owner follows (README "The safest
+    first step"): the command is the launcher, not a bare `aicowork`, and the first
+    commit needs a git identity — the clean-room run of 2026-10-09 stopped at both."""
+    import argparse
+    from aicowork.commands import instance
+    target = tmp_path / f"n{os.getpid()}z"
+    rc = instance.cmd_init(argparse.Namespace(target=str(target), preset="personal-simple", lang="en", no_tools=False))
+    out = capsys.readouterr().out
+    assert rc == 0 and "instance ready" in out
+    assert "git config user.name" in out and "git config user.email" in out
+    assert "./aicowork.sh doctor" in out and "aicowork.bat doctor" in out
+    assert "aicowork doctor" not in out.replace("aicowork.sh doctor", "").replace("aicowork.bat doctor", "")
+
+
+def test_init_creates_every_folder_of_rebuild_section_1(tmp_path):
+    """SUITE L1-SKELETON: "every folder of REBUILD §1". A rebuild from the kernel text
+    alone (2026-10-09) made `06_logs/triage/`; `init` did not."""
+    target = tmp_path / f"s{os.getpid()}z"
+    ops.init(target, preset="personal-simple", lang="en", tools=False)
+    section_1 = (KERNEL / "REBUILD.md").read_text(encoding="utf-8").split("## 1. Folder skeleton")[1]
+    block = re.search(r"```\n(.*?)```", section_1, re.S).group(1)          # the fenced list, nothing else
+    listed = re.findall(r"(\d\d_[a-z_-]+(?:/[a-z0-9_-]+)?)/", block)
+    for d in sorted(set(listed)):
+        assert (target / d).is_dir(), d
+    assert (target / "06_logs" / "triage").is_dir()
+    assert not checks.l1_skeleton(target)
+
+
+def test_l3_triage_accepts_a_session_that_ended_with_a_plan(inst):
+    """inbox-triage Acceptance (2026-10-09): items a pending plan names are not "left",
+    and the footer may wait for the owner's apply. A clean-room session that obeyed the
+    plan rule scored FAIL before this."""
+    _, since = C.git(inst, "rev-parse", "HEAD")
+    since = since.strip()
+    (inst / "00_inbox" / "idea.md").write_text(
+        "---\ntype: decision\nvisibility: private\ncircle: health\ndate: 2026-10-09\n---\n# Standing desk\n",
+        encoding="utf-8")
+    plans = inst / "06_logs" / "triage"
+    plans.mkdir(parents=True, exist_ok=True)
+    (plans / "2026-10-09_1_plan.json").write_text(
+        '{"moves": [{"from": "00_inbox/idea.md", "to": "09_decisions/2026-10-09_standing-desk.md", "type": "decision"}]}',
+        encoding="utf-8")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "add", "-A")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "triage: plan 1 item for owner apply")
+    f = audit.score_triage(inst, since)
+    assert not [x for x in f if x.case == "L3-TRIAGE" and x.level == "error"], f
+    (inst / "00_inbox" / "stray.md").write_text("---\ntype: note\n---\nnot planned\n", encoding="utf-8")
+    f = audit.score_triage(inst, since)
+    assert any("1 item(s) left: stray.md" in x.message for x in f)
+
+
+def test_allow_tokens_cannot_silence_the_owners_own_names(inst):
+    """`allow_tokens:` exists for false positives of the derived deny-list (a title
+    word, a slug part). An agent that can write me.md could otherwise list the
+    owner's own name there and export it (2026-10-09, marker-vs-binding)."""
+    me = inst / "03_personas" / "me.md"
+    tokens, src = C.deny_list(inst)
+    explicit = sorted(C.check_tokens(inst))
+    derived = sorted(t for t, where in src.items() if where.startswith("project slug part"))
+    assert explicit and derived
+    me.write_text(C.read(me).replace("check_tokens: [", f"allow_tokens: [{explicit[0]}, {derived[0]}]\ncheck_tokens: [", 1),
+                  encoding="utf-8")
+    tokens2, _ = C.deny_list(inst)
+    assert explicit[0] in tokens2, "an explicit check_token stays denied"
+    assert derived[0] not in tokens2, "a derived slug part may be allowed"
+    _note(inst, PUB + f"Shared with {explicit[0]}.\n")
+    with pytest.raises(egress.PolicyError):
+        egress.export(inst, "share-public")
+
+
+def test_allow_tokens_is_bound_to_the_anchor(inst):
+    """A change to `allow_tokens:` shows as steering drift like `check_tokens` (warn;
+    egress stays policy-bound), so a widened valve is never silent."""
+    from aicowork_core.anchor import steering_drift
+    assert steering_drift(inst)[0] == "ok"
+    me = inst / "03_personas" / "me.md"
+    me.write_text(C.read(me).replace("check_tokens: [", "allow_tokens: [warehouse]\ncheck_tokens: [", 1), encoding="utf-8")
+    assert steering_drift(inst) == ("drift", ["03_personas/me.md#allow_tokens"])
+    assert {lvl for lvl, m in anchor.check_anchor(inst) if "allow_tokens" in m} == {"warn"}

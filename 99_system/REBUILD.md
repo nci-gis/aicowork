@@ -10,14 +10,14 @@ _Tools are optional: the kernel works with files alone. Commands written `aicowo
 
 A rebuild needs exactly these; everything else has a default in this file.
 
-| Input                                                                                      | Goes to                                                                                                    |
-| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| name, organisation, timezone, languages                                                    | identity line of `03_personas/me.md` (the timezone lives only there; "today" is the host's local date)     |
-| the spellings of name and organisation that must never ship                                | `check_tokens` of `03_personas/me.md`                                                                      |
-| roles (one line each, what the role owes)                                                  | "## Roles" of `03_personas/me.md`                                                                          |
-| machine kind: own machine → `personal-simple`; managed by an employer → `corporate-strict` | `policy.yaml` and `aicowork.yaml` `security.preset` (same value)                                           |
-| the host, if any                                                                           | the instruction file name (from `hosts/<host>.md`); no host → `INSTRUCTIONS.md` at the root                |
-| languages for chat, content, templates                                                     | `aicowork.yaml` `language` (default `en`; `ui` and `modules.99_system` keep the copied value unless given) |
+| Input                                                                                      | Goes to                                                                                                                                                |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| name, organisation, timezone, languages                                                    | identity line of `03_personas/me.md` (the timezone lives only there; "today" is the host's local date)                                                 |
+| the spellings of name and organisation that must never ship                                | `check_tokens` of `03_personas/me.md`                                                                                                                  |
+| roles (one line each, what the role owes)                                                  | "## Roles" of `03_personas/me.md`                                                                                                                      |
+| machine kind: own machine → `personal-simple`; managed by an employer → `corporate-strict` | `policy.yaml` and `aicowork.yaml` `security.preset` (same value)                                                                                       |
+| the host, if any                                                                           | the instruction file name (from `hosts/<host>.md` in the full release; the kernel-only zip ships no `hosts/`); no host → `INSTRUCTIONS.md` at the root |
+| languages for chat, content, templates                                                     | `aicowork.yaml` `language` (default `en`; `ui` and `modules.99_system` keep the copied value unless given)                                             |
 
 **Not an input**: the policy decision. `policy.yaml` is copied from the preset _undecided_ (no `decided:` line). Only the owner adds `decided: YYYY-MM-DD`, once, deliberately (PHILOSOPHY #11) — never an agent, even when asked; until then every egress command refuses. The rebuild never fills it.
 
@@ -29,20 +29,20 @@ A rebuild needs exactly these; everything else has a default in this file.
 08_practices/  09_decisions/  10_reminders/  07_archive/00_inbox-originals/  99_system/
 ```
 
-Each top-level folder `00_`–`10_` gets a `README.md`: a `# <folder>/` heading, then that folder's purpose and naming from CONVENTIONS "Folders", word for word, and the line "Rules: `99_system/CONVENTIONS.md`." — the starting point for a person or an agent opening the folder (README files are never content). Other empty folders hold a `.gitkeep` (`07_archive/00_inbox-originals/` receives the original of every triaged inbox file). `git init`. Root `.gitignore`, exactly: `Thumbs.db` `desktop.ini` `.DS_Store` `~$*` `*.tmp` `*.bak` `_scratch/` `_to_delete/` `_tmp/` `.venv/` `98_tools/apps/viewer/data/` `__pycache__/` `.pytest_cache/` `*.bundle`, plus the editor settings folders the host page lists. Never ignore a folder that holds skill pointers the host page tells you to keep. Root `.gitattributes`: `* text=auto eol=lf` (one line ending everywhere, so audits diff cleanly), then `*.bat text eol=crlf`, `*.cmd text eol=crlf` (Windows scripts need it), `*.png binary`, `*.jpg binary`, `*.pdf binary`, `*.pptx binary`, `*.zip binary`, `*.bundle binary`. Without a host page there are no editor folders to add to `.gitignore`. `00_inbox/` gets only its `.gitkeep`.
+Each top-level folder `00_`–`10_` gets a `README.md`: a `# <folder>/` heading, on the next line that folder's purpose from CONVENTIONS "Folders" word for word, a blank line, "Files: `<its naming>`.", a blank line, and the line "Rules: `99_system/CONVENTIONS.md`." — the starting point for a person or an agent opening the folder (README files are never content). Other empty folders hold a `.gitkeep` (`07_archive/00_inbox-originals/` receives the original of every triaged inbox file). `git init`. Root `.gitignore`, exactly: `Thumbs.db` `desktop.ini` `.DS_Store` `~$*` `*.tmp` `*.bak` `_scratch/` `_to_delete/` `_tmp/` `.venv/` `98_tools/apps/viewer/data/` `__pycache__/` `.pytest_cache/` `*.bundle`, plus the editor settings folders the host page lists. Never ignore a folder that holds skill pointers the host page tells you to keep. Root `.gitattributes`: `* text=auto eol=lf` (one line ending everywhere, so audits diff cleanly), then `*.bat text eol=crlf`, `*.cmd text eol=crlf` (Windows scripts need it), `*.png binary`, `*.jpg binary`, `*.pdf binary`, `*.pptx binary`, `*.zip binary`, `*.bundle binary`. Without a host page there are no editor folders to add to `.gitignore`. `00_inbox/` gets its `README.md` and nothing else.
 
 Root files:
 
 - `INDEX.md` — live catalog: title `# INDEX — Live Catalog`, then `##` sections Events · Emails · Personas · Projects · Practices · Reminders · Decisions · Recent results (the owner's own `me.md` is not listed), then a `---` rule and the footer `Last triage: —` (a dash until the first triage).
-- `aicowork.yaml` — instance config, copied from `99_system/aicowork.example.yaml` (CONVENTIONS "Instance config"); set `language` and `security.preset` from §0, keep every other key as copied (tool knobs are harmless without tools).
+- `aicowork.yaml` — instance config, copied from `99_system/aicowork.example.yaml` (CONVENTIONS "Instance config"); set `language` and `security.preset` from §0 and `kernel_version` to `VERSION`, keep every other key as copied (tool knobs are harmless without tools).
 - `policy.yaml` — egress policy, copied verbatim from the §0 preset in `99_system/presets/` — undecided until the owner decides it (§0).
 - the instruction file (name from §0), containing `99_system/instruction-file.md` verbatim, header line included.
 - `hosts/` — host adapters, beside the kernel and not part of it (CONVENTIONS "Rings"); optional, hash-locked like the kernel.
-- `03_personas/me.md` — the owner, copied from `99_system/templates/en/owner.md` and filled: `check_tokens` (every spelling of name, organisation and people that must never ship), the identity line, the roles (sections without a role are left out).
+- `03_personas/me.md` — the owner, copied from `99_system/templates/en/owner.md` and filled: `date` (today), `check_tokens` (every spelling of name, organisation and people that must never ship — the owner lists them, the rebuild adds none), the identity line (timezone as an IANA name or `UTC±N`), the roles (sections without a role are left out).
 - `modules.lock` — for every module enabled in `aicowork.yaml`: a JSON object `{"<name>": "<sha256>"}` (CONVENTIONS "Modules").
 - Nothing else at the root: the release's own files (`LICENSE`, `NOTICE.md`, `CHANGELOG.md`, `docs/`, …) describe the release and are not copied into an instance.
 
-Finish with **one commit** `chore: init instance from kernel <VERSION>`, authored with whatever git identity the host has (the kernel sets none; if there is none, set a repository-local one that names the agent, never the owner). Registering scheduled prompts and skills is a host step (`hosts/<host>.md`); a files-only rebuild registers nothing — rituals then start by hand.
+Finish with **one commit** `chore: init instance from kernel <VERSION>`, authored with whatever git identity the host has (the kernel sets none; the owner's own name there is no leak, an instance is never published; if there is none, set a repository-local one that names the agent, never the owner). The commit includes `99_system/`. Registering scheduled prompts and skills is a host step (`hosts/<host>.md`); a files-only rebuild registers nothing — rituals then start by hand.
 
 ## 2. Content contract
 
@@ -64,6 +64,7 @@ Exactly as CONVENTIONS.md: folder table, filenames `YYYY-MM-DD_slug.md`, frontma
 | `presets/`                                      | `policy.yaml` presets                                                                                                             |
 | `aicowork.example.yaml`                         | instance config example                                                                                                           |
 | `conformance/`                                  | the suite that defines "proper"                                                                                                   |
+| `README.md`, `LICENSE`, `MANIFEST.sha256`       | the ring's front page (it names the six budgeted documents), its licence, its file hashes                                         |
 
 ## 4. Skills
 

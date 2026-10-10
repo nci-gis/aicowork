@@ -68,3 +68,15 @@ The kernel stays within its budget (9,966 of 10,000 words).
 **Source**: owner, in session — "bẻ gãy kernel" (attack it), then "sửa plan và thực hiện" with decisions D1–D9 of `05_results/2026-10/2026-10-06_rc4-plan-2.md` (owner's instance).
 **Rationale**: the agent changed `99_system/` on the owner's instruction: CONVENTIONS (inbox files leave as private; `decided:` bound to the trust anchor that now covers every steering file; token matching after normalisation; symlinks and hidden characters reported; reminders rule 9 adds `missed`), the frontmatter schema and reminder template (`missed`), SUITE rows L2-POLICY-BOUND, L2-REACH-LINK, L2-INDEX-CLEAN, L2-LEAK-NORM, L2-HIDDEN, redteam fixtures 31–32, `fixtures/leak/`, the inbox-triage skill (private on filing; INDEX titles in the agent's words). The decision record is drafted in `memory/2026-10-06-marker-vs-binding.md` for the owner to place in `decisions/`.
 **Promoted by**: the owner (instruction in session), carried out by the agent
+
+## 2026-10-09: Round 001 opened; `v0.0.1-plan.md` brought to rc.6; CI workflow drafted → `plan/`, `.github/workflows/`
+
+**Source**: owner, in session ("go ahead, and proceed by order as suggested") on the agent's plan to close 0.0.1 through its open gates G4, G5, G6.
+**Rationale**: `plan/` and `.github/` are read-only to agents beyond `Do`/`Check` of an active round. The owner authorised: `cycles/Round_001.md` opened, `v0.0.1-plan.md` "Where we are" and row R4 brought from rc.2 to rc.6, and `docs/ci/verify.yml.template` turned into a workflow with `uses:` pinned to commit SHAs that the owner verifies before enabling.
+**Promoted by**: the owner (instruction in session), carried out by the agent
+
+## 2026-10-09: findings of the clean-room dry run and the rebuild drill → kernel `99_system/`, `.github/`, tools
+
+**Source**: owner, in session ("go ahead to resolve them") on `memory/2026-10-09-clean-room-findings-kernel.md` (F6–F9) and `memory/2026-10-09-rebuild-drill-g4.md` (12 items).
+**Rationale**: the agent changed `99_system/` (read-only to agents) on the owner's explicit instruction: `instruction-file.md` step 3 and the inbox-triage skill name the launcher; the skill's Acceptance admits a session that ends with a plan (and SUITE L3-TRIAGE through it); REBUILD §0, §1 and §3 (inbox README, README shape, `me.md` fields, `kernel_version`, `hosts/` from the full release, git identity, the commit's content, three listed files); CONVENTIONS `06_logs/` row; SUITE L1-FRONTMATTER excludes `README.md`; `aicowork.example.yaml` `kernel_version`. The tools follow the text (scorer, `triage --apply`, `devkit package`). F8 decided: the tool moves, the owner commits — `apply` says how.
+**Promoted by**: the owner (instruction in session), carried out by the agent

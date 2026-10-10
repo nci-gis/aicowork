@@ -29,9 +29,11 @@ def cmd_init(args):
           "  1. fill 03_personas/me.md (Name, Org, check_tokens: the names that must never be shared)\n"
           "  2. read policy.yaml; add `decided: <today>` when you agree (until then nothing is copied anywhere)\n"
           "  3. copy INSTRUCTIONS.md into your host's instruction file (hosts/README.md says where)\n"
-          + ("  4. git config core.hooksPath .githooks   then   git add -A && git commit -m \"chore: init instance from kernel\"\n"
-             "  5. aicowork doctor" if (target / ".githooks").is_dir() else
-             "  4. git add -A && git commit -m \"chore: init instance from kernel\""))
+          "  4. commit what you changed:   git add -A && git commit -m \"chore: fill me.md\"\n"
+          "     (the first time, git asks who you are: in this folder, git config user.name \"<First Last>\""
+          " and git config user.email \"<you@example.com>\")"
+          + ("\n  5. git config core.hooksPath .githooks   (the hooks refuse a leak before it is committed or pushed)\n"
+             "  6. ./aicowork.sh doctor   (on Windows: aicowork.bat doctor)" if (target / ".githooks").is_dir() else ""))
     return 0
 
 

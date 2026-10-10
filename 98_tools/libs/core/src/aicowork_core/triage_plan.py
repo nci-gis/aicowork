@@ -67,6 +67,14 @@ def check_plan(base, plan):
             raise PlanError(f"move {i}: destination {m['to']} already exists (no overwrite)")
         if src.stat().st_size > MAX_BYTES:
             raise PlanError(f"move {i}: source larger than {MAX_BYTES} bytes")
+        if C.rel(base, dst).startswith(tuple(f + "/" for f in C.FM_FOLDERS)):
+            # where L1-FRONTMATTER judges the result, the agent prepares the note in the
+            # inbox (frontmatter, markers) and the owner only moves it — a raw item would
+            # land without a `type` (05_results/ and 07_archive/ take any file)
+            meta, _, has = C.frontmatter(src)
+            if not has or not meta.get("type"):
+                raise PlanError(f"move {i}: {m['from']} has no frontmatter with a type — "
+                                "the agent prepares the note before the owner moves it")
         seen.add(str(dst).lower())
         out.append((src, dst))
     return out
@@ -88,11 +96,27 @@ def apply(base, plan_path, do_apply=False):
         was = force_private(d)
         if was:
             forced.append(f"- `{C.rel(base, d)}`: `visibility: {was}` set to `private` (a sender's label is not the owner's)")
+    _stamp_last_triage(base)
     report = C.write_report(base, "audit", f"{C.today().isoformat()}_triage-apply_{len(moves)}.md",
                             f"Triage plan applied — {len(moves)} moves",
                             [f"plan: `{plan_path.name}`", ""] + lines + ([""] + forced if forced else []))
     _retire(base, plan_path, "applied")
     return moves, report
+
+
+def _stamp_last_triage(base):
+    """The session that wrote the plan did not finish the triage; applying it does
+    (inbox-triage Acceptance), so the `Last triage:` footer becomes today. Only that
+    line changes; line endings are kept."""
+    idx = Path(base) / "INDEX.md"
+    if not idx.is_file():
+        return
+    raw = idx.read_bytes()
+    nl = b"\r\n" if b"\r\n" in raw else b"\n"
+    today = C.today().isoformat().encode("ascii")
+    new = re.sub(rb"(?m)^Last triage:[^\r\n]*", b"Last triage: " + today, raw, count=1)
+    if new != raw:
+        idx.write_bytes(new.replace(b"\r\n", b"\n").replace(b"\n", nl))
 
 
 def _retire(base, plan_path, how):

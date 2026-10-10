@@ -40,7 +40,7 @@ def differences(root=ROOT):
 
 # ---------------- example instance (fictional owner: Minh Tran, Example Co.) ----------------
 EX = "example-instance/"
-for d in ("00_inbox", "05_results", "07_archive/00_inbox-originals", "06_logs/weekly"):
+for d in ("00_inbox", "05_results", "07_archive/00_inbox-originals", "06_logs/weekly", "06_logs/triage"):   # REBUILD §1
     put(f"{EX}{d}/.gitkeep", "")
 put(f"{EX}00_inbox/README.md", "# 00_inbox — drop zone\nDrop anything here, then ask the agent to triage.\n")
 put(f"{EX}INDEX.md", """
