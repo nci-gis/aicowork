@@ -49,7 +49,7 @@ Notes: `permissions.defaultMode` values that skip approvals cannot be set from p
 
 ## The trust anchor on this host (ceiling)
 
-Claude Code runs on the owner's own machine with the owner's profile. That is where the trust anchor lives (`~/.local/state/aicowork/anchors`, `%LOCALAPPDATA%\aicowork\anchors`), so an agent session here can read it — and, with the host's shell, rewrite it. On this host the anchor is **tamper-evident, not tamper-proof** (SECURITY, threat 10): `doctor` and the viewer show drift, `export` and `backup` refuse on it, but an agent that is allowed to run shell commands could re-anchor after changing the policy. What keeps it honest here is the host's permission boundary (ask on shell commands; the hardening page) and the post-session `audit`. An anchor outside the machine is not built (SECURITY "not claimed").
+Claude Code runs on the owner's own machine with the owner's profile. That is where the trust anchor lives (`~/.local/state/aicowork/anchors`, `%LOCALAPPDATA%\aicowork\anchors`), so an agent session here can read it — and, with the host's shell, rewrite it. On this host the anchor is **tamper-evident, not tamper-proof** (`docs/threat-model.md`, threat 10): `doctor` and the viewer show drift, `export` and `backup` refuse on it, but an agent that is allowed to run shell commands could re-anchor after changing the policy. What keeps it honest here is the host's permission boundary (ask on shell commands; the hardening page) and the post-session `audit`. An anchor outside the machine is not built (SECURITY "not claimed").
 
 ## Data handling
 

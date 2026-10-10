@@ -80,3 +80,9 @@ The kernel stays within its budget (9,966 of 10,000 words).
 **Source**: owner, in session ("go ahead to resolve them") on `memory/2026-10-09-clean-room-findings-kernel.md` (F6–F9) and `memory/2026-10-09-rebuild-drill-g4.md` (12 items).
 **Rationale**: the agent changed `99_system/` (read-only to agents) on the owner's explicit instruction: `instruction-file.md` step 3 and the inbox-triage skill name the launcher; the skill's Acceptance admits a session that ends with a plan (and SUITE L3-TRIAGE through it); REBUILD §0, §1 and §3 (inbox README, README shape, `me.md` fields, `kernel_version`, `hosts/` from the full release, git identity, the commit's content, three listed files); CONVENTIONS `06_logs/` row; SUITE L1-FRONTMATTER excludes `README.md`; `aicowork.example.yaml` `kernel_version`. The tools follow the text (scorer, `triage --apply`, `devkit package`). F8 decided: the tool moves, the owner commits — `apply` says how.
 **Promoted by**: the owner (instruction in session), carried out by the agent
+
+## 2026-10-10: Round 002 drafted (Planning); root documents in two levels → `plan/`, root documents
+
+**Source**: owner, in session — "open r002 for the new feat?" after agreeing that classification and linking is a feature for after 0.0.1; and "verbose → docs" for every root document.
+**Rationale**: opening a round is a human call (PDCA): `cycles/Round_002.md` is drafted at the owner's request with status Planning and no start date; it starts when Round 001 is Complete. The CHANGELOG's older sections moved to `docs/releases/0.0.1-rc.N.md` verbatim, with the short form at the root; SECURITY's threat model moved to `docs/threat-model.md` with a pointer; CONTRIBUTING states the rule.
+**Promoted by**: the owner (instruction in session), carried out by the agent

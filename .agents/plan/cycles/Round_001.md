@@ -63,6 +63,9 @@ Record what could **not** be verified as explicitly as what could.
 **Learnings**:
 
 - A file copied through Windows can carry an NTFS alternate data stream into WSL as `name:Stream`; the manifest catches it, which is the point of the manifest.
+- The leak scans read what the tools wrote, not what git wrote: fifteen commits carried an employer's identity (C36). Every channel a push sends — blobs, messages, identities — is a channel the scan must read.
+- Root documents are what a person reads; the evidence lives in `docs/`. CHANGELOG went from 4,055 words to the short form with `docs/releases/`; SECURITY keeps its claims and sends the threat model to `docs/threat-model.md`.
+- The owner's bar for "proven": at least a usable product in front of the second person, not a sound kernel behind a viewer that annoys. That is Round 002's premise.
 
 **Promotions**:
 
