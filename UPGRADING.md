@@ -2,7 +2,7 @@
 
 `aicowork upgrade <release.zip> --expect-sha256 <published sha256>` shows the diff; `--apply` installs it (clean git tree required; a bundle is taken first; removed files go to `07_archive/`; instance files are never touched except `kernel_version` in `aicowork.yaml`). The tools never fetch: you download or clone the release yourself, then point `upgrade` at it. Each section below lists what **you** must change in the instance by hand for that version — `upgrade` prints it and does not do it.
 
-## Unreleased (the next candidate)
+## 0.0.1-rc.7
 
 1. **Run `aicowork anchor` on your own computer once more**: the trust anchor now binds `allow_tokens` in `03_personas/me.md` beside `check_tokens`. Until you do, `doctor` and the viewer report drift on `03_personas/me.md#allow_tokens`; egress is not stopped by it.
 2. If you used `allow_tokens:` to let one of your explicit `check_tokens` through, it no longer does — the field silences only names the deny-list derived from persona titles and project slugs. Remove the explicit token from `check_tokens` instead, if that was the intent.

@@ -12,7 +12,7 @@ members = [
 
 [[package]]
 name = "aicowork"
-version = "0.0.1rc6"
+version = "0.0.1rc7"
 source = { editable = "apps/aicowork" }
 dependencies = [
     { name = "aicowork-core" },
@@ -32,12 +32,12 @@ provides-extras = ["seal"]
 
 [[package]]
 name = "aicowork-core"
-version = "0.0.1rc6"
+version = "0.0.1rc7"
 source = { editable = "libs/core" }
 
 [[package]]
 name = "aicowork-tools"
-version = "0.0.1rc6"
+version = "0.0.1rc7"
 source = { virtual = "." }
 dependencies = [
     { name = "aicowork", extra = ["seal"] },
@@ -64,7 +64,7 @@ dev = [
 
 [[package]]
 name = "aicowork-viewer"
-version = "0.0.1rc6"
+version = "0.0.1rc7"
 source = { editable = "apps/viewer" }
 dependencies = [
     { name = "aicowork-core" },

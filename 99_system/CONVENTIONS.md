@@ -51,7 +51,7 @@ Tools live in `98_tools/` (one LICENSE, one `MANIFEST.sha256`): shared libraries
 
 YAML between `---` fences at the top of every content `.md`. Keys and values in English; the body keeps its original language. Machine-checkable form: `99_system/schemas/frontmatter.schema.json`.
 
-**Core keys**: `type` (event/email/persona/project/log/note/practice/decision/reminder), `circle` (work/family/friend/health — exactly these four), `date`, `time`, `status`, `tags`, `source`, `visibility`.
+**Core keys**: `type` (event/email/persona/project/log/note/practice/decision/reminder), `circle` (work/family/friend/health — exactly these four), `date`, `time`, `status`, `tags` (lower-case slugs; a tag shared by two items is the link between them, and a project's slug is its tag — `related:` is the explicit pointer), `source`, `visibility`.
 
 | Field                  | On                              | Values / meaning                                                                                                                                                           |
 | ---------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
