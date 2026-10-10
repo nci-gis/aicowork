@@ -22,7 +22,7 @@ Part 2 — the gates
 - [ ] 4. G5 preparation (agent): the five README steps run on a clean Linux user from the rc.6 zips; a one-page tester sheet and a question-log template written for the non-expert tester.
 - [ ] 5. G5 (owner + a non-expert tester, second machine, zips alone): every question written down; each becomes a doc fix or a test.
 - [ ] 6. G6: `hosts/claude-code.md` H4 (scheduled prompt) verified on a date; `hosts/github-copilot.md` H3 when a Copilot session is available.
-- [ ] 7. G4: rebuild an instance from `99_system/` alone with an agent ("rebuild AI-Cowork following 99_system/REBUILD.md"), conformance run on the result, the outcome recorded. Counts as the first restore drill (backlog, due 2026-11).
+- [x] 7. G4: rebuild an instance from `99_system/` alone with an agent ("rebuild AI-Cowork following 99_system/REBUILD.md"), conformance run on the result, the outcome recorded (2026-10-09: `memory/2026-10-09-rebuild-drill-g4.md`; 0 questions, L1 pass, L2 one error explained, 12 text items for the owner). Counts as the first restore drill (backlog, due 2026-11).
 - [x] 8. `docs/dpia-lite.md` turned into a template (2026-10-09: §0 inputs, generic §4, the one owner's jurisdictions kept as an example); inventory re-checked — REBUILD §3 omits `README.md`, `LICENSE`, `MANIFEST.sha256` (F9, kernel wording, for the owner).
 
 Part 3 — ship (owner, `docs/publishing.md` steps 0–4)
@@ -48,11 +48,11 @@ Part 3 — ship (owner, `docs/publishing.md` steps 0–4)
 
 ## Check
 
-- [ ] `aicowork verify` PASS on the branch before each PR.
-- [ ] CI: the workflow's first run on a PR passes with `--locked`; every SHA matches the tag the owner verified.
-- [ ] G5: the tester's question log exists and each line has a disposition (fixed / test / accepted).
-- [ ] G4: conformance on the rebuilt instance reports 0 errors, or each error is named with its cause.
-- [ ] G6: each verified row carries the date and the host version.
+- [x] `aicowork verify` PASS on the branch before each PR (2026-10-09: core 128, aicowork 103, viewer 81, devkit 24).
+- [ ] CI: the workflow's first run on a PR passes with `--locked` (2026-10-09: green from the second push on); every SHA matches the tag the owner verified — **owner**.
+- [ ] G5: the tester's question log exists and each line has a disposition (fixed / test / accepted). The agent's dry run is not the gate: a non-expert on a second machine is.
+- [x] G4: conformance on the rebuilt instance reports 0 errors, or each error is named with its cause (1 error, L2-OWNER, cause: the kernel's reserved name in `check_tokens`; `memory/2026-10-09-rebuild-drill-g4.md`).
+- [x] G6: each verified row carries the date and the host version (Claude Code 2.1.201, 2026-10-09). Copilot: not verified.
 
 Record what could **not** be verified as explicitly as what could.
 
