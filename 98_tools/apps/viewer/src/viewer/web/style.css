@@ -364,3 +364,10 @@ li.task.done{ color:var(--muted); text-decoration:line-through }
 
 .badge.link { cursor:pointer; margin-left:6px }
 .badge.link:hover { color:var(--accent); border-color:var(--accent) }
+
+/* Round 002: related items on an item (shared tags, related: pointers, back-links) */
+.dr-related{margin:.4rem 0 .8rem;padding:.5rem .7rem;border:1px solid var(--line);border-radius:8px}
+.dr-related h4{margin:0 0 .3rem;font-size:.8rem;opacity:.75}
+.dr-related a{display:block;padding:.15rem 0;text-decoration:none;color:inherit}
+.dr-related a .why{opacity:.6;font-size:.8rem;margin-left:.4rem}
+#side-tags .pill .n{opacity:.6;margin-left:.3rem}

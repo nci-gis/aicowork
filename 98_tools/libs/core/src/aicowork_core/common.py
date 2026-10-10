@@ -435,3 +435,13 @@ def write_report(base, sub, name, title, lines, meta=None):
     head = "---\n" + "".join(f"{k}: {v}\n" for k, v in fm.items()) + "---\n"
     p.write_text(head + f"# {title}\n\n" + "\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     return p
+
+
+# A note's `status` is free text in the kernel; these values mean the item is closed
+# for the owner's day-to-day view (owner, 2026-10-10). The viewer's default filter and
+# `aicowork tags` read it; the kernel says nothing about it.
+CLOSED_STATUSES = frozenset({"done", "archived", "cancelled", "superseded", "deferred"})
+
+
+def is_open(status):
+    return (str(status or "")).strip().lower() not in CLOSED_STATUSES

@@ -229,3 +229,29 @@ def test_browse_defaults_to_open_items_and_the_sidebar_counts_them(client):
         assert d["counts_all"]["event"] == d["counts"]["event"] + 1
     finally:
         done.unlink()
+
+
+# ---- Round 002: tags are the link ----
+
+def test_tags_link_items_in_the_viewer(client):
+    """Two notes sharing a tag are linked; a `related:` path is an explicit link and a
+    back-link; the sidebar and the Browse filter see the tag with its open count."""
+    a = BASE / "09_decisions" / "2026-10-10_desk.md"
+    b = BASE / "01_events" / "2026-10-11_desk-delivery.md"
+    c = BASE / "01_events" / "2026-10-12_desk-done.md"
+    a.write_text("---\ntype: decision\nvisibility: private\ncircle: health\ndate: 2026-10-10\nstatus: decided\ntags: [standing-desk]\n---\n# Desk decision\n", encoding="utf-8")
+    b.write_text("---\ntype: event\nvisibility: private\ncircle: health\ndate: 2026-10-11\ntags: [standing-desk]\nrelated: [09_decisions/2026-10-10_desk.md]\n---\n# Delivery\n", encoding="utf-8")
+    c.write_text("---\ntype: event\nvisibility: private\ncircle: health\ndate: 2026-10-12\nstatus: done\ntags: [standing-desk]\n---\n# Old\n", encoding="utf-8")
+    try:
+        tags = {t["tag"]: t for t in client.get("/api/data").json()["tags"]}
+        assert tags["standing-desk"]["open"] == 2 and tags["standing-desk"]["all"] == 3
+        found = {i["path"] for i in client.get("/api/search?tag=standing-desk&status=open").json()["items"]}
+        assert found == {"09_decisions/2026-10-10_desk.md", "01_events/2026-10-11_desk-delivery.md"}
+        rel = {r["path"]: r["why"] for r in client.get("/api/item?path=01_events/2026-10-11_desk-delivery.md").json()["related"]}
+        assert rel["09_decisions/2026-10-10_desk.md"] == "related:"          # the explicit pointer wins over the shared tag
+        assert "01_events/2026-10-12_desk-done.md" not in rel                # closed items do not come back by tag
+        back = {r["path"]: r["why"] for r in client.get("/api/item?path=09_decisions/2026-10-10_desk.md").json()["related"]}
+        assert back["01_events/2026-10-11_desk-delivery.md"] == "points here"
+    finally:
+        for p in (a, b, c):
+            p.unlink()

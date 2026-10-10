@@ -31,6 +31,7 @@ Every command belongs to one of three groups (`aicowork --help` shows them, and 
 | `aicowork new` / `today`     | a note from a template in your language; today's date, weekday and ISO week                            |
 | `aicowork app <id>`          | starts a registered service app (`apps:` kind `service` with `command`) from your terminal; `--list`   |
 | `aicowork reminders`         | every active reminder and its state; `--week` adds done / overdue / missed this week (missed from git) |
+| `aicowork tags`              | every tag with how many items carry it, open and in all — tags are the link between items; `--json`    |
 | `aicowork viz` / `shortcut`  | starts the viewer app (`../viewer/`, needs `uv`); a Desktop shortcut for it (Windows)                  |
 
 **Advanced & evidence** — sealed copies, retention, InfoSec, host skills

@@ -110,6 +110,25 @@ def cmd_triage(args):
     return 0
 
 
+def cmd_tags(args):
+    """Tags are the link between items (Round 002): every tag with how many items carry
+    it, open and in all — the files-only way to see what the viewer's sidebar shows."""
+    import json as _json
+    from aicowork_core import tags
+    base = _base(args)
+    rows = tags.tag_table(base)
+    if args.json:
+        print(_json.dumps(rows, ensure_ascii=False, indent=1))
+        return 0
+    if not rows:
+        print("no tags yet — `tags: [a-slug]` in a note's frontmatter links it to every other note carrying the tag")
+        return 0
+    for r in rows:
+        print(f"  {r['tag']:<28} {r['open']:>4} open  {r['all']:>4} in all")
+    print(f"{len(rows)} tag(s)")
+    return 0
+
+
 def cmd_new(args):
     from aicowork.instance import ops
     try:
@@ -226,4 +245,6 @@ def register(add):
     p.add_argument("--here", action="store_true", help="this IS the owner's host (overrides the foreign-profile check)")
     p = add("reminders", cmd_reminders, "every active reminder and its state; --week: the weekly review's numbers")
     p.add_argument("--week", metavar="YYYY-Www", nargs="?", const="", help="ISO week (default: this week)")
+    p.add_argument("--json", action="store_true")
+    p = add("tags", cmd_tags, "every tag with how many items carry it, open and in all (the link between items)")
     p.add_argument("--json", action="store_true")

@@ -26,6 +26,8 @@ const ACT = {
   open:        el => openItem(el.dataset.path),
   browseKind:  el => browseWith(el.dataset.kind),
   browseCircle:el => browseWith(undefined, $('f-circle').value===el.dataset.circle ? '' : el.dataset.circle),
+  browseTag:   el => { $('f-tag').value = $('f-tag').value===el.dataset.tag ? '' : el.dataset.tag; browseWith(); doSearch(); },
+  openRelated: el => openItem(el.dataset.path, true),
   balance:     el => browseWith('', el.dataset.circle),
   tab:         el => setTab(el.dataset.tab),
   mode:        el => setMode(el.dataset.mode),
@@ -131,6 +133,18 @@ function renderSidebar(){
   $('side-circles').innerHTML = ['work','family','friend','health'].map(x =>
     `<button class="pill ${curC===x?'on':''}" data-act="browseCircle" data-circle="${x}">
        <span class="dot" style="background:${CIRCLE_COLOR[x]}"></span>${x}</button>`).join('');
+  // Round 002: tags are the link and the group — the sidebar lists them by open count,
+  // the Browse filter offers the same list
+  const h = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const tags = DATA.tags || [], curT = $('f-tag') ? $('f-tag').value : '';
+  $('side-tags').innerHTML = tags.slice(0, 14).map(t =>
+    `<button class="pill ${curT===t.tag?'on':''}" data-act="browseTag" data-tag="${h(t.tag)}" title="${t.open} open · ${t.all} in all">#${h(t.tag)}<span class="n">${t.open}</span></button>`).join('')
+    || '<span class="empty">no tags yet</span>';
+  const sel = $('f-tag');
+  if (sel){
+    sel.innerHTML = '<option value="">All tags</option>' + tags.map(t => `<option value="${h(t.tag)}">${h(t.tag)} (${t.open})</option>`).join('');
+    sel.value = tags.some(t => t.tag===curT) ? curT : '';
+  }
   $('side-foot').textContent = DATA.base_name || '';
 }
 
@@ -525,7 +539,7 @@ function onSearchInput(){
 }
 async function doSearch(){
   const q = $('q').value, params = new URLSearchParams({
-    q, kind:$('f-kind').value, circle:$('f-circle').value, status:$('f-status').value });
+    q, kind:$('f-kind').value, circle:$('f-circle').value, status:$('f-status').value, tag:$('f-tag').value });
   const r = await (await fetch('/api/search?'+params)).json();
   if (DATA) renderSidebar();
   $('rcount').textContent = r.total + ' item' + (r.total===1?'':'s') +
@@ -571,6 +585,13 @@ async function openItem(path, push){
   ].filter(Boolean).join('');
   // CUR.html is sanitised server-side (security.SafeHtmlExtension): raw HTML
   // in notes arrives escaped, links/images are scheme-filtered.
+  { // Round 002: what this item is linked to — related: pointers, back-links, shared tags
+    const h = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const rel = CUR.related || [], box = $('dr-related');
+    box.hidden = !rel.length;
+    box.innerHTML = rel.length ? '<h4>Related</h4>' + rel.map(r =>
+      `<a href="#" data-act="openRelated" data-path="${h(r.path)}">${KIND_ICON[r.kind]||'·'} ${h(r.title)}<span class="why">${h(r.why)}</span></a>`).join('') : '';
+  }
   $('dr-body').innerHTML = CUR.html || '<p class="empty">(empty)</p>';
   $('dr-edit').style.display = CUR.editable === false ? 'none' : '';
   $('dr-body').scrollTop = 0;
