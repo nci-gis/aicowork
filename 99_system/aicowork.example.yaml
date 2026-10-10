@@ -4,7 +4,7 @@
 # Runtime knobs that are wrong warn and fall back; `server` and `security`
 # fail closed (the tools refuse to run).
 schema: 1
-kernel_version: 0.0.1-rc.2
+kernel_version: 0.0.1-rc.6
 
 language:
   chat: [en]            # languages the AI may answer in; the first is the default

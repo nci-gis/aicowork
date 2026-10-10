@@ -30,20 +30,20 @@ Tools live in `98_tools/` (one LICENSE, one `MANIFEST.sha256`): shared libraries
 
 ## Folders
 
-| Folder          | Holds                                                                                          | Naming                                      |
-| --------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `00_inbox/`     | raw drops, zero structure                                                                      | anything                                    |
-| `01_events/`    | one-time happenings, meetings                                                                  | `YYYY-MM-DD_slug.md`                        |
-| `02_emails/`    | mails in/out                                                                                   | `YYYY-MM-DD_slug.md`                        |
-| `03_personas/`  | people & roles                                                                                 | `name-or-role.md`                           |
-| `04_projects/`  | finite goals, work AND life (a product launch, a first 10 km run)                              | `<slug>/index.md`                           |
-| `05_results/`   | session deliverables                                                                           | `YYYY-MM/YYYY-MM-DD_slug.ext`               |
-| `06_logs/`      | daily & weekly logs; `audit/`, `egress/`, `conformance/` reports                               | `daily/YYYY-MM-DD.md`, `weekly/YYYY-Www.md` |
-| `07_archive/`   | everything retired (never delete); retired kernel files in `kernel-<version>/`, never exported | keep original name                          |
-| `08_practices/` | recurring commitments with a rhythm — not events, not projects                                 | `slug.md`                                   |
-| `09_decisions/` | decision log, ADR-style, work AND life; `backlog.md` (ideas with triggers)                     | `YYYY-MM-DD_slug.md`                        |
-| `10_reminders/` | dated duties that repeat — measured by done/overdue, not presence                              | `slug.md`                                   |
-| `99_system/`    | the kernel                                                                                     | —                                           |
+| Folder          | Holds                                                                                                                         | Naming                                      |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `00_inbox/`     | raw drops, zero structure                                                                                                     | anything                                    |
+| `01_events/`    | one-time happenings, meetings                                                                                                 | `YYYY-MM-DD_slug.md`                        |
+| `02_emails/`    | mails in/out                                                                                                                  | `YYYY-MM-DD_slug.md`                        |
+| `03_personas/`  | people & roles                                                                                                                | `name-or-role.md`                           |
+| `04_projects/`  | finite goals, work AND life (a product launch, a first 10 km run)                                                             | `<slug>/index.md`                           |
+| `05_results/`   | session deliverables                                                                                                          | `YYYY-MM/YYYY-MM-DD_slug.ext`               |
+| `06_logs/`      | daily & weekly logs; `triage/` plans; `audit/`, `egress/`, `conformance/` reports (report folders are created on first write) | `daily/YYYY-MM-DD.md`, `weekly/YYYY-Www.md` |
+| `07_archive/`   | everything retired (never delete); retired kernel files in `kernel-<version>/`, never exported                                | keep original name                          |
+| `08_practices/` | recurring commitments with a rhythm — not events, not projects                                                                | `slug.md`                                   |
+| `09_decisions/` | decision log, ADR-style, work AND life; `backlog.md` (ideas with triggers)                                                    | `YYYY-MM-DD_slug.md`                        |
+| `10_reminders/` | dated duties that repeat — measured by done/overdue, not presence                                                             | `slug.md`                                   |
+| `99_system/`    | the kernel                                                                                                                    | —                                           |
 
 `README.md` and `.gitkeep` are never content: they are notes for humans and are ignored by every tool. A project's main document is therefore `04_projects/<slug>/index.md`, never `README.md`.
 
