@@ -1408,3 +1408,33 @@ def test_l3_triage_accepts_a_session_that_ended_with_a_plan(inst):
     (inst / "00_inbox" / "stray.md").write_text("---\ntype: note\n---\nnot planned\n", encoding="utf-8")
     f = audit.score_triage(inst, since)
     assert any("1 item(s) left: stray.md" in x.message for x in f)
+
+
+def test_allow_tokens_cannot_silence_the_owners_own_names(inst):
+    """`allow_tokens:` exists for false positives of the derived deny-list (a title
+    word, a slug part). An agent that can write me.md could otherwise list the
+    owner's own name there and export it (2026-10-09, marker-vs-binding)."""
+    me = inst / "03_personas" / "me.md"
+    tokens, src = C.deny_list(inst)
+    explicit = sorted(C.check_tokens(inst))
+    derived = sorted(t for t, where in src.items() if where.startswith("project slug part"))
+    assert explicit and derived
+    me.write_text(C.read(me).replace("check_tokens: [", f"allow_tokens: [{explicit[0]}, {derived[0]}]\ncheck_tokens: [", 1),
+                  encoding="utf-8")
+    tokens2, _ = C.deny_list(inst)
+    assert explicit[0] in tokens2, "an explicit check_token stays denied"
+    assert derived[0] not in tokens2, "a derived slug part may be allowed"
+    _note(inst, PUB + f"Shared with {explicit[0]}.\n")
+    with pytest.raises(egress.PolicyError):
+        egress.export(inst, "share-public")
+
+
+def test_allow_tokens_is_bound_to_the_anchor(inst):
+    """A change to `allow_tokens:` shows as steering drift like `check_tokens` (warn;
+    egress stays policy-bound), so a widened valve is never silent."""
+    from aicowork_core.anchor import steering_drift
+    assert steering_drift(inst)[0] == "ok"
+    me = inst / "03_personas" / "me.md"
+    me.write_text(C.read(me).replace("check_tokens: [", "allow_tokens: [warehouse]\ncheck_tokens: [", 1), encoding="utf-8")
+    assert steering_drift(inst) == ("drift", ["03_personas/me.md#allow_tokens"])
+    assert {lvl for lvl, m in anchor.check_anchor(inst) if "allow_tokens" in m} == {"warn"}

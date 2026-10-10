@@ -46,6 +46,7 @@ Part 3 — ship (owner, `docs/publishing.md` steps 0–4)
 - 2026-10-09, step 6 (G6): `hosts/claude-code.md` H1, H3 verified, H4's mechanism verified, spike items 1 and 3 dated. Copilot H3 still `?`.
 - 2026-10-09, step 4 deliverable: `docs/clean-room-test.md` (tester sheet + question log).
 - 2026-10-09, kernel pass (owner: "go ahead to resolve them"; promotions.md): F6, F7, F9 and the drill's text items edited in `99_system/`; the scorer, `triage --apply` (footer; F8: the owner commits, the tool says how) and `devkit package` (example `kernel_version`) follow the text, each with a test. Items 9 (branch name) and 12 (header comments, `circle`) accepted as they are.
+- 2026-10-10, found while a generic slug part (`native`, from a project folder in the owner's instance) blocked every commit: `allow_tokens:` — the valve for such false positives — could also drop an explicit `check_tokens` entry, and the anchor did not bind it (marker-vs-binding class). Fixed in the tools with tests, controls row C35, UPGRADING asks for one more `aicowork anchor`. Open for the owner: should CONVENTIONS rule 5 name `allow_tokens` and its limit (the kernel never mentions the field)? Also: `GENERIC_WORDS` in `common.py` could gain `native`, `testing` — the owner's judgement.
 
 ## Check
 

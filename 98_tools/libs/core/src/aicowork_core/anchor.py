@@ -18,7 +18,7 @@ from aicowork_core import common as C
 
 # the files whose content steers an agent session: every one is bound to the anchor
 STEERING_FILES = ("policy.yaml", "aicowork.yaml#security", "INSTRUCTIONS.md", "CLAUDE.md", "AGENTS.md",
-                  "03_personas/me.md#check_tokens", "modules.lock")
+                  "03_personas/me.md#check_tokens", "03_personas/me.md#allow_tokens", "modules.lock")
 # drift here stops egress (the policy and the preset decide what may leave)
 EGRESS_BOUND = ("policy.yaml", "aicowork.yaml#security")
 
@@ -106,6 +106,10 @@ def steering_hashes(base):
         elif part == "check_tokens":
             toks = C.check_tokens(base)
             out[name] = C.sha256_text(json.dumps(sorted(toks), ensure_ascii=False)) if toks is not None else None
+        elif part == "allow_tokens":
+            # what the owner lets through the derived deny-list is steering too: an agent
+            # that widens it must show as drift (2026-10-09)
+            out[name] = C.sha256_text(json.dumps(sorted(C.allow_tokens(base)), ensure_ascii=False))
     return out
 
 
