@@ -35,6 +35,8 @@ devkit leakscan          # every tracked file through both leak scanners   (PYTH
 devkit package           # the release zips build and both leak scanners are clean
 ```
 
+**CHANGELOG.md is written by hand, by the author of the change.** A pull request that touches a ring (`99_system/`, `hosts/`, `98_tools/`) adds its lines under `## Unreleased`, grouped as _The kernel · Security · Reference tools · Documents · The repository_, each line saying what changes for the owner and, where a test proves it, `(Measured: test_name)`. CI checks that the section moved when a ring did (`devkit changelog --since <base>`); the release build refuses while `## Unreleased` is still the heading (`docs/publishing.md` step 0 turns it into the version and date). Nothing generates the text: it is read by the owner before anything ships, so it has to say what a person needs to know.
+
 ## Host pages (`hosts/<host>.md`)
 
 A new host is supported when its page records every host-contract item with a date and host version, and the kernel needed **no change** to pass conformance L3 there.

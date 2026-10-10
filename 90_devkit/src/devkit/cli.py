@@ -77,6 +77,17 @@ def cmd_fixtures(args):
     return 0
 
 
+def cmd_changelog(args):
+    from devkit import changelog
+    base = _base(args)
+    reasons = changelog.check(base, args.since)
+    for r in reasons:
+        print(f"  {r}")
+    print("changelog: " + ("the first section moved with the rings (or nothing in a ring changed)" if not reasons
+                           else "needs a line — see above"))
+    return 1 if reasons else 0
+
+
 def cmd_fmt(args):
     from devkit import fmt
     base = _base(args)
@@ -121,6 +132,8 @@ def build_parser():
     p.add_argument("--check", action="store_true", help="only list fixtures the generator would change")
     p = add("fmt", cmd_fmt, "format the repository's Markdown with Prettier (pinned; see .prettierignore)")
     p.add_argument("--check", action="store_true", help="only list files that would change")
+    p = add("changelog", cmd_changelog, "check that a ring change since a base commit came with a CHANGELOG line")
+    p.add_argument("--since", metavar="REF", required=True, help="the base commit or branch to compare HEAD with (CI: the pull request's base)")
     return parser
 
 

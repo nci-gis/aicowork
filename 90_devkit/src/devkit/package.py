@@ -279,6 +279,29 @@ def version_problems(base):
     return out
 
 
+CHANGELOG_HEADING = re.compile(r"^## (\S+) — (\d{4}-\d{2}-\d{2})\b", re.M)
+
+
+def changelog_problems(base, v):
+    """CHANGELOG.md is written by a person and read by the owner before shipping
+    (publishing step 2); the build only checks its shape: the first entry is this
+    version with a date, and no `## Unreleased` section is left (rc.3 was rebuilt
+    for exactly that). -> [reason]."""
+    p = Path(base) / "CHANGELOG.md"
+    if not p.is_file():
+        return ["CHANGELOG.md is missing"]
+    text = C.read(p)
+    out = []
+    heads = re.findall(r"(?m)^## .*$", text)
+    first = heads[0] if heads else ""
+    m = CHANGELOG_HEADING.match(first)
+    if not m or m.group(1) != v:
+        out.append(f"CHANGELOG.md: the first entry is {first!r} — a build needs `## {v} — YYYY-MM-DD` on top")
+    if any(h.startswith("## Unreleased") for h in heads):
+        out.append("CHANGELOG.md: a `## Unreleased` section is left — move its lines under the version heading")
+    return out
+
+
 def preflight(base, deny_src=None):
     """Why a build must not happen now. -> list of reasons (empty = go).
     Nothing here can be skipped from the CLI: a release is built from a
@@ -288,6 +311,7 @@ def preflight(base, deny_src=None):
     v = _version(base)
     if not C.VERSION_RE.match(v):
         reasons.append(f"99_system/VERSION {v!r} is not a version (0.0.1, 0.0.1-rc.1)")
+    reasons += changelog_problems(base, v)
     for label, root in C.ring_roots(base):
         if root.is_dir() and (root / manifest.MANIFEST).is_file():
             probs = manifest.verify(root)
@@ -331,6 +355,31 @@ def _release_log(base):
     return base / ".agents" / "releases" / "releases.jsonl"
 
 
+def _release_manifest_hash(zp):
+    """sha256 of the RELEASE-MANIFEST.sha256 inside a built zip: the file list, by one hash."""
+    with zipfile.ZipFile(zp) as z:
+        names = [n for n in z.namelist() if n.endswith("RELEASE-MANIFEST.sha256")]
+        return C.sha256_text(z.read(names[0]).decode("utf-8")) if names else None
+
+
+def ring_files_at(base, commit):
+    """The ring files recorded in the manifests at `commit` (`<ring>/<path>`), read
+    from git — the release log no longer stores file lists. -> set, or None when
+    the commit is not in this clone."""
+    base = Path(base)
+    out = set()
+    for _, root in C.ring_roots(base):
+        ring = root.relative_to(base).as_posix()
+        rc, text = C.git(base, "show", f"{commit}:{ring}/{manifest.MANIFEST}")
+        if rc != 0:
+            return None
+        for line in text.splitlines():
+            parts = line.split(None, 1)
+            if len(parts) == 2:
+                out.add(f"{ring}/{parts[1].strip()}")
+    return out
+
+
 def last_release(base):
     f = _release_log(base)
     if not f.is_file():
@@ -366,10 +415,16 @@ def write_review(base, out_dir, v, results, reasons, tokens_src, deny_src=None):
                       *[f"  - `{r}` — {m}" for r, m in hits]]
         else:
             lines.append("- leak gate: clean (scanner A tokens, scanner B generic, C instance files)")
-        if prev and zp.name in prev.get("artifacts", {}):
-            old = set(prev["artifacts"][zp.name].get("files", []))
-            new = set(f.as_posix() for f in files)
-            lines.append(f"- vs {prev['version']}: +{len(new - old)} added, -{len(old - new)} removed"
+        lines.append("")
+    if prev:
+        # ring files at the previous build's commit vs now, from the manifests in git
+        # (a root document such as README.md is outside the rings and not counted)
+        old = ring_files_at(base, prev["commit"]) if prev.get("commit") else None
+        new = ring_files_at(base, "HEAD")
+        if old is None or new is None:
+            lines.append(f"- ring files vs {prev['version']} ({str(prev.get('commit'))[:7]}): not computable — that commit is not in this clone")
+        else:
+            lines.append(f"- ring files vs {prev['version']} ({prev['commit'][:7]}): +{len(new - old)} added, -{len(old - new)} removed"
                          + (": " + ", ".join(sorted(new - old)[:20]) if new - old else ""))
         lines.append("")
     lines += ["## Before publishing (owner)", "1. Read this file and the CHANGELOG; record the decision in your instance's `09_decisions/`.",
@@ -467,8 +522,11 @@ def build(base, out_dir=None, which=("full", "kernel", "tools"), check=True, den
         write_review(base, out_dir, v, full, [], src_map, deny_src)
         if not any(h for _, h, _ in full):
             rc, head = C.git(base, "rev-parse", "HEAD")
+            # one small row per build: the hashes and counts; the file lists live in each
+            # zip's RELEASE-MANIFEST.sha256 and in the ring manifests at `commit`
             rec = {"version": v, "date": C.today().isoformat(), "commit": head.strip() if rc == 0 else None,
-                   "artifacts": {zp.name: {"sha256": C.sha256_file(zp), "files": [f.as_posix() for f in files]}
+                   "artifacts": {zp.name: {"sha256": C.sha256_file(zp), "files": len(files),
+                                           "manifest_sha256": _release_manifest_hash(zp)}
                                  for zp, _, files in full}}
             log = _release_log(base)
             log.parent.mkdir(parents=True, exist_ok=True)

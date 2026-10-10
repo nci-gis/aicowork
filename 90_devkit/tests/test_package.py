@@ -67,6 +67,8 @@ def _release_base(inst):
     for doc in ("UPGRADING.md", "LICENSE"):
         if (REPO / doc).is_file() and not (inst / doc).exists():
             shutil.copy(REPO / doc, inst / doc)
+    if not (inst / "CHANGELOG.md").exists():      # the build checks its heading (changelog_problems)
+        (inst / "CHANGELOG.md").write_text(f"# Changelog\n\n## {VERSION} — 2026-10-01\n\n- a line.\n", encoding="utf-8")
     if not (inst / "99_system" / "conformance" / "fixtures").exists():   # a release ships its fixtures
         shutil.copytree(FIXTURES, inst / "99_system" / "conformance" / "fixtures")
     _seal(inst)
@@ -171,6 +173,7 @@ def _dev_repo(tmp_path):
                     ignore=shutil.ignore_patterns(".venv", "data", "__pycache__", ".pytest_cache"))
     (d / "README.md").write_text("# AI-Cowork\nPublic front page.\n", encoding="utf-8")
     shutil.copy(REPO / "99_system" / "LICENSE", d / "LICENSE")
+    (d / "CHANGELOG.md").write_text(f"# Changelog\n\n## {VERSION} — 2026-10-01\n\n- a line.\n", encoding="utf-8")
     _git(d, "init", "-q")
     _seal(d)
     return d
@@ -470,3 +473,64 @@ def test_version_problems_flag_a_stale_example_config(tmp_path):
     assert any("aicowork.example.yaml: kernel_version 0.0.1-rc.2" in p for p in package.version_problems(tmp_path))
     (k / "aicowork.example.yaml").write_text("kernel_version: 0.0.1-rc.6\nlanguage: en\n", encoding="utf-8")
     assert package.version_problems(tmp_path) == []
+
+
+def test_release_log_rows_are_small_and_the_review_diffs_from_git(inst, tmp_path):
+    """A row per build held the file list of every zip (20 KB a build, 2026-10-09):
+    now hashes and counts; the REVIEW's "+added/-removed" reads the ring manifests
+    at the previous commit from git instead."""
+    base = _release_base(inst)
+    package.build(base, tmp_path / "o1")
+    row = json.loads(C.read(package._release_log(base)).splitlines()[-1])
+    for art in row["artifacts"].values():
+        assert isinstance(art["files"], int) and art["files"] > 0
+        assert re.fullmatch(r"[0-9a-f]{64}", art["manifest_sha256"])
+    assert len(json.dumps(row)) < 1500
+    (base / "99_system" / "NEWDOC.md").write_text("# New\n", encoding="utf-8")
+    _seal(base)
+    package.build(base, tmp_path / "o2")
+    review = next((tmp_path / "o2").glob("REVIEW-*.md")).read_text(encoding="utf-8")
+    assert re.search(r"- ring files vs \S+ \([0-9a-f]{7}\): \+1 added, -0 removed: 99_system/NEWDOC.md", review), review
+
+
+def test_preflight_refuses_a_changelog_without_this_version_on_top(inst):
+    """rc.3 was rebuilt because its entry was still under `## Unreleased`; the build
+    now refuses that shape. The words stay a person's."""
+    base = _release_base(inst)
+    assert package.changelog_problems(base, VERSION) == []
+    cl = base / "CHANGELOG.md"
+    cl.write_text("# Changelog\n\n## Unreleased\n\n- a line.\n\n" + C.read(cl).split("\n\n", 1)[1], encoding="utf-8")
+    probs = package.changelog_problems(base, VERSION)
+    assert any("first entry is '## Unreleased'" in p for p in probs)
+    assert any("`## Unreleased` section is left" in p for p in probs)
+    cl.write_text(f"# Changelog\n\n## {VERSION} — 2026-10-10\n\n- a line.\n", encoding="utf-8")
+    assert package.changelog_problems(base, VERSION) == []
+    cl.unlink()
+    assert package.changelog_problems(base, VERSION) == ["CHANGELOG.md is missing"]
+
+
+def test_changelog_check_wants_a_line_when_a_ring_changes(tmp_path):
+    """CI: a ring change since the pull request's base comes with a change to the
+    first section of CHANGELOG.md; a change outside the rings needs none."""
+    from devkit import changelog
+    base = tmp_path / "r"
+    (base / "99_system").mkdir(parents=True)
+    (base / "99_system" / "A.md").write_text("a\n", encoding="utf-8")
+    (base / "99_system" / "MANIFEST.sha256").write_text("x  A.md\n", encoding="utf-8")
+    (base / "CHANGELOG.md").write_text("# Changelog\n\n## Unreleased\n\n## 0.0.1-rc.6 — 2026-10-08\n\n- old.\n", encoding="utf-8")
+    (base / "README.md").write_text("r\n", encoding="utf-8")
+    g = lambda *a: subprocess.run(["git", "-C", str(base), "-c", "user.email=t@example.com", "-c", "user.name=t", *a],
+                                  check=True, capture_output=True)
+    g("init", "-q"); g("add", "-A"); g("commit", "-qm", "base")
+    (base / "README.md").write_text("r2\n", encoding="utf-8")
+    g("add", "-A"); g("commit", "-qm", "docs only")
+    assert changelog.check(base, "HEAD~1") == []                          # nothing in a ring moved
+    (base / "99_system" / "A.md").write_text("a2\n", encoding="utf-8")
+    (base / "99_system" / "MANIFEST.sha256").write_text("y  A.md\n", encoding="utf-8")
+    g("add", "-A"); g("commit", "-qm", "feat(kernel): A")
+    reasons = changelog.check(base, "HEAD~2")
+    assert len(reasons) == 1 and "99_system/A.md" in reasons[0] and "MANIFEST" not in reasons[0]
+    (base / "CHANGELOG.md").write_text("# Changelog\n\n## Unreleased\n\n- A says a2.\n\n## 0.0.1-rc.6 — 2026-10-08\n\n- old.\n", encoding="utf-8")
+    g("add", "-A"); g("commit", "-qm", "docs: changelog")
+    assert changelog.check(base, "HEAD~3") == []
+    assert changelog.check(base, "no-such-ref")[0].startswith("cannot compare")
