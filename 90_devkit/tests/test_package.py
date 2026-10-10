@@ -3,6 +3,7 @@
 tree scan, and installing a built release (upgrade). Each test works on a temp
 copy of the fictional example instance checked together with this kernel."""
 import re
+import hashlib
 import json
 import os
 import shutil
@@ -534,3 +535,46 @@ def test_changelog_check_wants_a_line_when_a_ring_changes(tmp_path):
     g("add", "-A"); g("commit", "-qm", "docs: changelog")
     assert changelog.check(base, "HEAD~3") == []
     assert changelog.check(base, "no-such-ref")[0].startswith("cannot compare")
+
+
+def _review_identity(d, ident):
+    (d / "90_devkit").mkdir(exist_ok=True)
+    (d / "90_devkit" / "leak-reviewed.json").write_text(json.dumps({"schema": 1, "commit_identities": [
+        {"sha256": hashlib.sha256(ident.lower().encode("utf-8")).hexdigest(), "decided": "2026-10-10", "by": "owner"}]}),
+        encoding="utf-8")
+
+
+def test_push_scan_reads_the_identity_of_every_commit(inst, tmp_path):
+    """2026-10-10: fifteen commits carried an employer's address in their author and
+    committer fields; the push scan read blobs and messages only."""
+    owner, secret = _owner_instance(inst)
+    d = _tiny_repo(tmp_path)
+    zero = "0" * 40
+    addr = "someone" + "@" + f"m{os.getpid()}.co"      # built at runtime: a literal address is a leak here
+    _git(d, "-c", "user.email=t@example.com", "-c", f"user.name={secret}", "commit", "--allow-empty", "-qm", "clean message")
+    hits, _ = package.scan_pushed(d, [(head(d), zero)], deny_from=owner)
+    assert any(r.startswith("A commit-") and r.endswith("-author.txt") and secret in m for r, m in hits), hits
+    assert any(r.endswith("-committer.txt") for r, _ in hits)
+    _review_identity(d, f"{secret} <t@example.com>")                   # the owner reviewed that one identity
+    assert package.scan_pushed(d, [(head(d), zero)], deny_from=owner)[0] == []
+    _git(d, "-c", "user.email=" + addr, "-c", "user.name=t", "commit", "--allow-empty", "-qm", "clean too")
+    hits, _ = package.scan_pushed(d, [(head(d), zero)], deny_from=owner)
+    assert any(r.startswith("B commit-") and addr in m for r, m in hits), hits   # scanner B: an address
+
+
+def test_tree_scan_reads_the_configured_identity(inst, tmp_path):
+    """The pre-commit scan reads the identity this clone would sign the next commit
+    with, so a wrong `user.email` is refused before any commit carries it."""
+    owner, secret = _owner_instance(inst)
+    d = _tiny_repo(tmp_path)
+    assert package.scan_tree(d, deny_from=owner)[0] == []
+    addr = "someone" + "@" + f"m{os.getpid()}.co"      # built at runtime: a literal address is a leak here
+    _git(d, "config", "user.name", secret)
+    _git(d, "config", "user.email", "t@example.com")
+    hits, _ = package.scan_tree(d, deny_from=owner)
+    assert any(r.startswith("A git-identity") and secret in m for r, m in hits), hits
+    _review_identity(d, f"{secret} <t@example.com>")
+    assert package.scan_tree(d, deny_from=owner)[0] == []
+    _git(d, "config", "user.email", addr)
+    hits, _ = package.scan_tree(d, deny_from=owner)
+    assert any(r.startswith("B git-identity") and addr in m for r, m in hits), hits
