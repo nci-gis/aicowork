@@ -1385,3 +1385,26 @@ def test_init_creates_every_folder_of_rebuild_section_1(tmp_path):
         assert (target / d).is_dir(), d
     assert (target / "06_logs" / "triage").is_dir()
     assert not checks.l1_skeleton(target)
+
+
+def test_l3_triage_accepts_a_session_that_ended_with_a_plan(inst):
+    """inbox-triage Acceptance (2026-10-09): items a pending plan names are not "left",
+    and the footer may wait for the owner's apply. A clean-room session that obeyed the
+    plan rule scored FAIL before this."""
+    _, since = C.git(inst, "rev-parse", "HEAD")
+    since = since.strip()
+    (inst / "00_inbox" / "idea.md").write_text(
+        "---\ntype: decision\nvisibility: private\ncircle: health\ndate: 2026-10-09\n---\n# Standing desk\n",
+        encoding="utf-8")
+    plans = inst / "06_logs" / "triage"
+    plans.mkdir(parents=True, exist_ok=True)
+    (plans / "2026-10-09_1_plan.json").write_text(
+        '{"moves": [{"from": "00_inbox/idea.md", "to": "09_decisions/2026-10-09_standing-desk.md", "type": "decision"}]}',
+        encoding="utf-8")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "add", "-A")
+    _git(inst, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "triage: plan 1 item for owner apply")
+    f = audit.score_triage(inst, since)
+    assert not [x for x in f if x.case == "L3-TRIAGE" and x.level == "error"], f
+    (inst / "00_inbox" / "stray.md").write_text("---\ntype: note\n---\nnot planned\n", encoding="utf-8")
+    f = audit.score_triage(inst, since)
+    assert any("1 item(s) left: stray.md" in x.message for x in f)

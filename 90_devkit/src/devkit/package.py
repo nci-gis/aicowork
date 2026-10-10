@@ -246,11 +246,18 @@ def version_problems(base):
     every launcher runs `uv run --locked`, so a stale lock breaks every user's tools
     (rc.3 readiness B3). Read as text — no uv call, no network. -> [reason]."""
     base = Path(base)
-    tools = base / "98_tools"
-    if not (tools / "pyproject.toml").is_file():
-        return []
     v = _version(base)
     want, out, names = _pep440(v), [], []
+    example = base / "99_system" / "aicowork.example.yaml"
+    if example.is_file():
+        # REBUILD §1: a rebuilt instance copies this file and sets `kernel_version` to VERSION;
+        # the example said rc.2 at rc.6 (rebuild drill, 2026-10-09)
+        m = re.search(r"(?m)^kernel_version:\s*(\S+)", C.read(example))
+        if not m or m.group(1) != v:
+            out.append(f"99_system/aicowork.example.yaml: kernel_version {m.group(1) if m else '(none)'} is not VERSION {v}")
+    tools = base / "98_tools"
+    if not (tools / "pyproject.toml").is_file():
+        return out
     for f in sorted(tools.glob("**/pyproject.toml")):
         if ".venv" in f.parts:
             continue

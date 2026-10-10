@@ -4,8 +4,15 @@
 
 The five steps of README "The safest first step" were run on Linux from the rc.6 zip alone, with a fresh home folder, then a non-interactive Claude Code session did "triage my inbox" (`hosts/claude-code.md`, verified rows). What the text got wrong is fixed here; what the kernel text gets wrong waits for the owner (`.agents/memory/2026-10-09-clean-room-findings-kernel.md`).
 
+### The kernel (owner, 2026-10-09, from the dry run and the rebuild drill)
+
+- **A triage may end with a plan** (inbox-triage Acceptance): the inbox may hold, besides `README.md`/`.gitkeep`, exactly the items a plan this session wrote names as sources; the `Last triage:` footer may then wait for the owner's apply, which sets it. L3-TRIAGE scores accordingly. Before, a session that obeyed the plan rule scored FAIL.
+- The instruction file and the triage skill name the launcher an instance actually has (`./aicowork.sh`, `aicowork.bat`) beside `aicowork`; an agent that found no `aicowork` on PATH declared files-only mode with the tools present.
+- REBUILD: `00_inbox/` gets its `README.md` and nothing else (the two sentences disagreed); the folder READMEs' shape is stated; `me.md` is filled with `date` too, the owner lists every spelling of `check_tokens`, the timezone is an IANA name or `UTC±N`; `aicowork.yaml` takes `kernel_version` from `VERSION` (the example said rc.2); `hosts/` comes from the full release; the owner's own git identity in an instance is no leak; the first commit includes `99_system/`; §3 lists `README.md`, `LICENSE`, `MANIFEST.sha256`. CONVENTIONS: `06_logs/` names `triage/`, and report folders are created on first write. SUITE L1-FRONTMATTER excludes `README.md`, as the tools always did. Kernel documents: 8,004 of 10,000 words.
+
 ### Reference tools
 
+- `aicowork triage --apply` sets the `Last triage:` footer (the apply finishes the triage) and ends by saying how to commit — the tool moves, the owner records (`triage: apply <plan>`). `devkit package` refuses when `aicowork.example.yaml`'s `kernel_version` is not `VERSION`.
 - `init` ends with the commands a new owner can actually type: `./aicowork.sh doctor` (`aicowork.bat doctor` on Windows), not a bare `aicowork`; and it says that the first commit asks who you are, with the two `git config` lines. (Measured: `test_init_next_steps_name_the_launcher_and_the_git_identity`.)
 - `aicowork sbom --out dist/sbom.cdx.json` on a fresh checkout tracebacked because `dist/` did not exist; the folder is created. (Measured: `test_sbom_out_creates_the_parent_folder`.)
 - `06_logs/triage/` is part of the skeleton: REBUILD §1 lists it and SUITE L1-SKELETON means "every folder of REBUILD §1", but `init` did not create it and the check did not ask for it (found by the rebuild drill, gate G4). `init` creates it, L1-SKELETON checks it ("new in kernel 0.0.1-rc.6" while missing), the example instance has it; UPGRADING says to create it. (Measured: `test_init_creates_every_folder_of_rebuild_section_1`.)

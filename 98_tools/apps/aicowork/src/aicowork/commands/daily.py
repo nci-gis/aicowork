@@ -104,6 +104,9 @@ def cmd_triage(args):
         print(f"  {s.relative_to(base).as_posix()} -> {d.relative_to(base).as_posix()}")
     print(f"{len(moves)} move(s) " + (f"applied; report {report.relative_to(base)}" if report
                                        else "checked (dry run — add --apply to execute)"))
+    if report:
+        # the tool moves; the owner commits (the agent's triage commits, the owner's apply is theirs to record)
+        print(f"commit when you are done:   git add -A && git commit -m \"triage: apply {Path(args.plan).name}\"")
     return 0
 
 
