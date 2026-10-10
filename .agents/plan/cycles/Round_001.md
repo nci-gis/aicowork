@@ -23,7 +23,7 @@ Part 2 — the gates
 - [ ] 5. G5 (owner + a non-expert tester, second machine, zips alone): every question written down; each becomes a doc fix or a test.
 - [ ] 6. G6: `hosts/claude-code.md` H4 (scheduled prompt) verified on a date; `hosts/github-copilot.md` H3 when a Copilot session is available.
 - [ ] 7. G4: rebuild an instance from `99_system/` alone with an agent ("rebuild AI-Cowork following 99_system/REBUILD.md"), conformance run on the result, the outcome recorded. Counts as the first restore drill (backlog, due 2026-11).
-- [ ] 8. `docs/dpia-lite.md` turned into a template; inventory of CONVENTIONS vs. the files shipped re-checked.
+- [x] 8. `docs/dpia-lite.md` turned into a template (2026-10-09: §0 inputs, generic §4, the one owner's jurisdictions kept as an example); inventory re-checked — REBUILD §3 omits `README.md`, `LICENSE`, `MANIFEST.sha256` (F9, kernel wording, for the owner).
 
 Part 3 — ship (owner, `docs/publishing.md` steps 0–4)
 

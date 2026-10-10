@@ -17,6 +17,8 @@ Two places where the kernel text and what happens in an instance disagree. Neith
 
 **F7 — the inbox-triage Acceptance predates the plan rule.** Line 13 of the skill (rc.6): for a change to `03_personas/` or `09_decisions/`, write `06_logs/triage/<date>_<n>_plan.json`, say so, and stop. The Acceptance of the same skill (and SUITE L3-TRIAGE through it) still says: `00_inbox/` holds only `README.md`/`.gitkeep`; the `Last triage:` footer shows today. A session that obeys line 13 leaves the item in the inbox and does not set the footer; `conform --case L3-TRIAGE` scores it **FAIL** (2 errors) while `audit --task triage` is CLEAN. The scorer (`checks.score_triage`) follows the Acceptance faithfully, so the tools are not the place to fix it.
 
+**F9 — REBUILD §3 "Kernel contents" omits three files the kernel ships** (`v0.0.1-plan.md`, "inventory of the kernel vs. the files actually shipped"): `README.md` (the page that lists the six budgeted documents), `LICENSE` and `MANIFEST.sha256`. Everything else in the table matches the tree (schemas 4, skills 4, tasks 3, modules 1, presets 2, templates/en 11). One table row each, or one sentence: "plus `README.md`, `LICENSE` and the ring's `MANIFEST.sha256`".
+
 ## Evidence
 
 - Fresh instance from `aicowork-0.0.1-rc.6.zip`; one note in `00_inbox/`; `claude -p "triage my inbox" --allowedTools "Read,Write,Edit,Glob,Grep,Bash"`. Reply: "No tool runner (`aicowork`) is on this machine, so no health check ran — files-only mode"; plan written and committed (`triage: plan 1 item for owner apply`).
