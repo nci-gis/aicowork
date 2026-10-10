@@ -1,41 +1,14 @@
 # Changelog
 
-## Unreleased — findings of the first clean-room dry run (Round 001)
+## Unreleased — the gates: clean-room findings, the rebuild drill, two leak-gate fixes
 
-The five steps of README "The safest first step" were run on Linux from the rc.6 zip alone, with a fresh home folder, then a non-interactive Claude Code session did "triage my inbox" (`hosts/claude-code.md`, verified rows). What the text got wrong is fixed here; what the kernel text gets wrong waits for the owner (`.agents/memory/2026-10-09-clean-room-findings-kernel.md`).
+Round 001 ran the open gates of 0.0.1: the five README steps from the rc.6 zip, a rebuild from the kernel text alone, the Claude Code host page. What follows is the short form; the full notes with the evidence are in `docs/releases/unreleased.md`.
 
-### The kernel (owner, 2026-10-09, from the dry run and the rebuild drill)
-
-- **A triage may end with a plan** (inbox-triage Acceptance): the inbox may hold, besides `README.md`/`.gitkeep`, exactly the items a plan this session wrote names as sources; the `Last triage:` footer may then wait for the owner's apply, which sets it. L3-TRIAGE scores accordingly. Before, a session that obeyed the plan rule scored FAIL.
-- The instruction file and the triage skill name the launcher an instance actually has (`./aicowork.sh`, `aicowork.bat`) beside `aicowork`; an agent that found no `aicowork` on PATH declared files-only mode with the tools present.
-- REBUILD: `00_inbox/` gets its `README.md` and nothing else (the two sentences disagreed); the folder READMEs' shape is stated; `me.md` is filled with `date` too, the owner lists every spelling of `check_tokens`, the timezone is an IANA name or `UTC±N`; `aicowork.yaml` takes `kernel_version` from `VERSION` (the example said rc.2); `hosts/` comes from the full release; the owner's own git identity in an instance is no leak; the first commit includes `99_system/`; §3 lists `README.md`, `LICENSE`, `MANIFEST.sha256`. CONVENTIONS: `06_logs/` names `triage/`, and report folders are created on first write. SUITE L1-FRONTMATTER excludes `README.md`, as the tools always did. Kernel documents: 8,004 of 10,000 words.
-
-### Security
-
-- **A commit's identity left unscanned** (`docs/controls.md` C36). The push scan read every blob and commit message, not the author and committer fields: fifteen commits on two pull-request branches carried an employer's address before the owner saw it (2026-10-10; rewritten before merge). Now the push scan reads `name <email>` of every pushed commit, and `devkit leakscan` (the pre-commit hook) the identity this clone would sign the next commit with; the owner's one reviewed public identity passes by hash (`leak-reviewed.json`), anything else goes through both scanners. (Measured: `test_push_scan_reads_the_identity_of_every_commit`, `test_tree_scan_reads_the_configured_identity`.) What a force-push cannot undo — the old commits stay fetchable by hash on the hosting service until it purges them — is said in SECURITY "not claimed".
-- **`allow_tokens:` could silence the owner's own name** (`docs/controls.md` C35). The field in `03_personas/me.md` exists for false positives of the _derived_ deny-list — a persona title word, a project slug part such as `native` in `ai-native-…` — but the code let it drop an explicit `check_tokens` entry too, and the trust anchor did not bind it: an agent that may edit `me.md` could have listed the owner's name there and exported it, with no drift to show (the class `marker-vs-binding` closed for `decided:` in rc.4). Now `allow_tokens` touches only derived tokens — `check_tokens` and the Name/Org line stay denied whatever it says — and it is a steering part of the anchor like `check_tokens`: a change warns as drift. Found 2026-10-09 while a generic slug part blocked every commit of this repository. (Measured: `test_allow_tokens_cannot_silence_the_owners_own_names`, `test_allow_tokens_is_bound_to_the_anchor`.) The kernel text never named `allow_tokens`; whether CONVENTIONS rule 5 should state the field and its limit is the owner's call.
-
-### Reference tools
-
-- Viewer: Browse opens on **Open** items — not `done`, `archived`, `cancelled`, `superseded` or `deferred` — and the sidebar counts open items, the total on hover; "Any status" is one click away. A finished project or an archived note kept showing in every list and count (owner, first weeks of use). The kernel's `status` stays free text; the five closed values are the viewer's reading of it. (Measured: `test_browse_defaults_to_open_items_and_the_sidebar_counts_them`.)
-- `aicowork triage --apply` sets the `Last triage:` footer (the apply finishes the triage) and ends by saying how to commit — the tool moves, the owner records (`triage: apply <plan>`). `devkit package` refuses when `aicowork.example.yaml`'s `kernel_version` is not `VERSION`.
-- `init` ends with the commands a new owner can actually type: `./aicowork.sh doctor` (`aicowork.bat doctor` on Windows), not a bare `aicowork`; and it says that the first commit asks who you are, with the two `git config` lines. (Measured: `test_init_next_steps_name_the_launcher_and_the_git_identity`.)
-- `aicowork sbom --out dist/sbom.cdx.json` on a fresh checkout tracebacked because `dist/` did not exist; the folder is created. (Measured: `test_sbom_out_creates_the_parent_folder`.)
-- `06_logs/triage/` is part of the skeleton: REBUILD §1 lists it and SUITE L1-SKELETON means "every folder of REBUILD §1", but `init` did not create it and the check did not ask for it (found by the rebuild drill, gate G4). `init` creates it, L1-SKELETON checks it ("new in kernel 0.0.1-rc.6" while missing), the example instance has it; UPGRADING says to create it. (Measured: `test_init_creates_every_folder_of_rebuild_section_1`.)
-- A triage plan cannot move a raw inbox item into a folder where L1-FRONTMATTER judges notes: the agent prepares the note (frontmatter, markers) and the owner only moves it. A plan applied in the clean-room run filed a one-line idea into `09_decisions/` as it was, and conformance failed on the result. `05_results/` and `07_archive/` still take any file. (Measured: `libs/core/tests/test_triage_plan.py`.)
-
-### Documents
-
-- README step 2 names the launcher (`./aicowork.sh` / `aicowork.bat`); step 4 names the placeholders `me.md` really has (`<…>`, empty `Name:` / `Org:`), not `{{…}}`, and its `check_tokens` example no longer uses `Example Co` — the kernel's own made-up company, which made L2-OWNER report `CONVENTIONS.md` as a leak for anyone who copied the example.
-- Rebuild drill (gate G4): an agent rebuilt an instance from `99_system/` alone, with no question to the owner; L1 passes. Twelve places where the text made it guess are listed for the owner (`.agents/memory/2026-10-09-rebuild-drill-g4.md`).
-- `docs/clean-room-test.md`: the sheet for the non-expert tester of gate G5 — what to write down at each step, and the question log.
-- `hosts/claude-code.md`: H1, H3 and the mechanism of H4 verified on 2026-10-09 (Claude Code 2.1.201); a `-p` session needs its allow-list on the command line.
-
-### The repository
-
-- CI (`.github/workflows/verify.yml`): `aicowork verify`, `devkit leakscan` (generic patterns), SBOM and an advisory `pip-audit` on every push and pull request; actions pinned to commit SHAs.
-- **The CHANGELOG stays hand-written, and that is now checked** (CONTRIBUTING): on a pull request, `devkit changelog --since <base>` fails when a ring changed and the first section of `CHANGELOG.md` did not; `devkit package` refuses while `## Unreleased` is the heading or the first entry is not this version with a date — the shape rc.3 was rebuilt for. (Measured: `test_changelog_check_wants_a_line_when_a_ring_changes`, `test_preflight_refuses_a_changelog_without_this_version_on_top`.)
-- `.agents/releases/releases.jsonl` grew 20 KB a build because every row held the file list of all three zips (17 rows, 303 KB). A row now holds the hashes and counts only — the file lists live in each zip's `RELEASE-MANIFEST.sha256` and in the ring manifests at the logged commit — and the REVIEW's "+added, −removed" line reads those manifests from git. Old rows stay as they are. (Measured: `test_release_log_rows_are_small_and_the_review_diffs_from_git`.)
+- **The kernel** (owner): a triage may end with a plan for the owner, and L3-TRIAGE scores it so; the instruction file and the triage skill name the launcher an instance has (`./aicowork.sh`, `aicowork.bat`); REBUILD §0, §1 and §3 made exact where the rebuild drill had to guess; SUITE L1-FRONTMATTER excludes `README.md`. Kernel documents: 8,004 of 10,000 words.
+- **Security**: `allow_tokens:` can no longer silence an explicit `check_tokens` entry and is bound to the trust anchor (C35) — run `aicowork anchor` once after upgrading; the leak scans now read the author and committer of every pushed commit, and the identity this clone would sign the next commit with (C36).
+- **Reference tools**: the viewer opens on open items and counts them; `init` ends with commands a new owner can type; `triage --apply` sets the `Last triage:` footer and says how to commit; a plan cannot file a raw item where frontmatter is required; `06_logs/triage/` is part of the skeleton; `sbom --out` creates its folder.
+- **Documents**: README steps 2 and 4 as a new owner meets them; `docs/clean-room-test.md` for the tester of gate G5; `docs/dpia-lite.md` is a template; `hosts/claude-code.md` H1, H3 and H4 verified.
+- **The repository**: CI on every push and pull request; the CHANGELOG is hand-written and checked; the release log keeps hashes, not file lists.
 
 ## 0.0.1-rc.6 — 2026-10-08 (release candidate, not for publication) — the viewer and the apps
 
