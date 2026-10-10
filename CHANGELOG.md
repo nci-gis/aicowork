@@ -1,184 +1,52 @@
 # Changelog
 
-## Unreleased — findings of the first clean-room dry run (Round 001)
+## Unreleased — the gates: clean-room findings, the rebuild drill, two leak-gate fixes
 
-The five steps of README "The safest first step" were run on Linux from the rc.6 zip alone, with a fresh home folder, then a non-interactive Claude Code session did "triage my inbox" (`hosts/claude-code.md`, verified rows). What the text got wrong is fixed here; what the kernel text gets wrong waits for the owner (`.agents/memory/2026-10-09-clean-room-findings-kernel.md`).
+Round 001 ran the open gates of 0.0.1: the five README steps from the rc.6 zip, a rebuild from the kernel text alone, the Claude Code host page. What follows is the short form; the full notes with the evidence are in `docs/releases/unreleased.md`.
 
-### The kernel (owner, 2026-10-09, from the dry run and the rebuild drill)
-
-- **A triage may end with a plan** (inbox-triage Acceptance): the inbox may hold, besides `README.md`/`.gitkeep`, exactly the items a plan this session wrote names as sources; the `Last triage:` footer may then wait for the owner's apply, which sets it. L3-TRIAGE scores accordingly. Before, a session that obeyed the plan rule scored FAIL.
-- The instruction file and the triage skill name the launcher an instance actually has (`./aicowork.sh`, `aicowork.bat`) beside `aicowork`; an agent that found no `aicowork` on PATH declared files-only mode with the tools present.
-- REBUILD: `00_inbox/` gets its `README.md` and nothing else (the two sentences disagreed); the folder READMEs' shape is stated; `me.md` is filled with `date` too, the owner lists every spelling of `check_tokens`, the timezone is an IANA name or `UTC±N`; `aicowork.yaml` takes `kernel_version` from `VERSION` (the example said rc.2); `hosts/` comes from the full release; the owner's own git identity in an instance is no leak; the first commit includes `99_system/`; §3 lists `README.md`, `LICENSE`, `MANIFEST.sha256`. CONVENTIONS: `06_logs/` names `triage/`, and report folders are created on first write. SUITE L1-FRONTMATTER excludes `README.md`, as the tools always did. Kernel documents: 8,004 of 10,000 words.
-
-### Security
-
-- **A commit's identity left unscanned** (`docs/controls.md` C36). The push scan read every blob and commit message, not the author and committer fields: fifteen commits on two pull-request branches carried an employer's address before the owner saw it (2026-10-10; rewritten before merge). Now the push scan reads `name <email>` of every pushed commit, and `devkit leakscan` (the pre-commit hook) the identity this clone would sign the next commit with; the owner's one reviewed public identity passes by hash (`leak-reviewed.json`), anything else goes through both scanners. (Measured: `test_push_scan_reads_the_identity_of_every_commit`, `test_tree_scan_reads_the_configured_identity`.) What a force-push cannot undo — the old commits stay fetchable by hash on the hosting service until it purges them — is said in SECURITY "not claimed".
-- **`allow_tokens:` could silence the owner's own name** (`docs/controls.md` C35). The field in `03_personas/me.md` exists for false positives of the _derived_ deny-list — a persona title word, a project slug part such as `native` in `ai-native-…` — but the code let it drop an explicit `check_tokens` entry too, and the trust anchor did not bind it: an agent that may edit `me.md` could have listed the owner's name there and exported it, with no drift to show (the class `marker-vs-binding` closed for `decided:` in rc.4). Now `allow_tokens` touches only derived tokens — `check_tokens` and the Name/Org line stay denied whatever it says — and it is a steering part of the anchor like `check_tokens`: a change warns as drift. Found 2026-10-09 while a generic slug part blocked every commit of this repository. (Measured: `test_allow_tokens_cannot_silence_the_owners_own_names`, `test_allow_tokens_is_bound_to_the_anchor`.) The kernel text never named `allow_tokens`; whether CONVENTIONS rule 5 should state the field and its limit is the owner's call.
-
-### Reference tools
-
-- Viewer: Browse opens on **Open** items — not `done`, `archived`, `cancelled`, `superseded` or `deferred` — and the sidebar counts open items, the total on hover; "Any status" is one click away. A finished project or an archived note kept showing in every list and count (owner, first weeks of use). The kernel's `status` stays free text; the five closed values are the viewer's reading of it. (Measured: `test_browse_defaults_to_open_items_and_the_sidebar_counts_them`.)
-- `aicowork triage --apply` sets the `Last triage:` footer (the apply finishes the triage) and ends by saying how to commit — the tool moves, the owner records (`triage: apply <plan>`). `devkit package` refuses when `aicowork.example.yaml`'s `kernel_version` is not `VERSION`.
-- `init` ends with the commands a new owner can actually type: `./aicowork.sh doctor` (`aicowork.bat doctor` on Windows), not a bare `aicowork`; and it says that the first commit asks who you are, with the two `git config` lines. (Measured: `test_init_next_steps_name_the_launcher_and_the_git_identity`.)
-- `aicowork sbom --out dist/sbom.cdx.json` on a fresh checkout tracebacked because `dist/` did not exist; the folder is created. (Measured: `test_sbom_out_creates_the_parent_folder`.)
-- `06_logs/triage/` is part of the skeleton: REBUILD §1 lists it and SUITE L1-SKELETON means "every folder of REBUILD §1", but `init` did not create it and the check did not ask for it (found by the rebuild drill, gate G4). `init` creates it, L1-SKELETON checks it ("new in kernel 0.0.1-rc.6" while missing), the example instance has it; UPGRADING says to create it. (Measured: `test_init_creates_every_folder_of_rebuild_section_1`.)
-- A triage plan cannot move a raw inbox item into a folder where L1-FRONTMATTER judges notes: the agent prepares the note (frontmatter, markers) and the owner only moves it. A plan applied in the clean-room run filed a one-line idea into `09_decisions/` as it was, and conformance failed on the result. `05_results/` and `07_archive/` still take any file. (Measured: `libs/core/tests/test_triage_plan.py`.)
-
-### Documents
-
-- README step 2 names the launcher (`./aicowork.sh` / `aicowork.bat`); step 4 names the placeholders `me.md` really has (`<…>`, empty `Name:` / `Org:`), not `{{…}}`, and its `check_tokens` example no longer uses `Example Co` — the kernel's own made-up company, which made L2-OWNER report `CONVENTIONS.md` as a leak for anyone who copied the example.
-- Rebuild drill (gate G4): an agent rebuilt an instance from `99_system/` alone, with no question to the owner; L1 passes. Twelve places where the text made it guess are listed for the owner (`.agents/memory/2026-10-09-rebuild-drill-g4.md`).
-- `docs/clean-room-test.md`: the sheet for the non-expert tester of gate G5 — what to write down at each step, and the question log.
-- `hosts/claude-code.md`: H1, H3 and the mechanism of H4 verified on 2026-10-09 (Claude Code 2.1.201); a `-p` session needs its allow-list on the command line.
-
-### The repository
-
-- CI (`.github/workflows/verify.yml`): `aicowork verify`, `devkit leakscan` (generic patterns), SBOM and an advisory `pip-audit` on every push and pull request; actions pinned to commit SHAs.
-- **The CHANGELOG stays hand-written, and that is now checked** (CONTRIBUTING): on a pull request, `devkit changelog --since <base>` fails when a ring changed and the first section of `CHANGELOG.md` did not; `devkit package` refuses while `## Unreleased` is the heading or the first entry is not this version with a date — the shape rc.3 was rebuilt for. (Measured: `test_changelog_check_wants_a_line_when_a_ring_changes`, `test_preflight_refuses_a_changelog_without_this_version_on_top`.)
-- `.agents/releases/releases.jsonl` grew 20 KB a build because every row held the file list of all three zips (17 rows, 303 KB). A row now holds the hashes and counts only — the file lists live in each zip's `RELEASE-MANIFEST.sha256` and in the ring manifests at the logged commit — and the REVIEW's "+added, −removed" line reads those manifests from git. Old rows stay as they are. (Measured: `test_release_log_rows_are_small_and_the_review_diffs_from_git`.)
+- **The kernel** (owner): a triage may end with a plan for the owner, and L3-TRIAGE scores it so; the instruction file and the triage skill name the launcher an instance has (`./aicowork.sh`, `aicowork.bat`); REBUILD §0, §1 and §3 made exact where the rebuild drill had to guess; SUITE L1-FRONTMATTER excludes `README.md`. Kernel documents: 8,004 of 10,000 words.
+- **Security**: `allow_tokens:` can no longer silence an explicit `check_tokens` entry and is bound to the trust anchor (C35) — run `aicowork anchor` once after upgrading; the leak scans now read the author and committer of every pushed commit, and the identity this clone would sign the next commit with (C36).
+- **Reference tools**: the viewer opens on open items and counts them; `init` ends with commands a new owner can type; `triage --apply` sets the `Last triage:` footer and says how to commit; a plan cannot file a raw item where frontmatter is required; `06_logs/triage/` is part of the skeleton; `sbom --out` creates its folder.
+- **Documents**: README steps 2 and 4 as a new owner meets them; `docs/clean-room-test.md` for the tester of gate G5; `docs/dpia-lite.md` is a template; `hosts/claude-code.md` H1, H3 and H4 verified.
+- **The repository**: CI on every push and pull request; the CHANGELOG is hand-written and checked; the release log keeps hashes, not file lists.
 
 ## 0.0.1-rc.6 — 2026-10-08 (release candidate, not for publication) — the viewer and the apps
 
-### The kernel
+Full notes: `docs/releases/0.0.1-rc.6.md`.
 
-- **Triage plans are the owner's to apply** (inbox-triage, REBUILD §1): for a bulk move or a change to `03_personas/` or `09_decisions/`, the agent writes `06_logs/triage/<date>_<n>_plan.json` and stops; the owner applies it from the viewer's Inbox card or with `aicowork triage --apply`. The file stays as the record (`*_applied.json`, `*_dismissed.json`).
-- **Topic watch** (new task `tasks/topic-watch.md`, skill `topic-watch`, templates `watch.md` and `watch-result.md`, conformance L3-WATCH with `fixtures/watch/`): a project lists topics with queries and a cadence; each run files one result note per due topic under `05_results/` with `claim: sourced`, `trust: untrusted`, the URLs as `source`, the body between untrusted markers — search, file, never conclude.
-- **Apps** (CONVENTIONS "Instance config"): a `service` may carry `command`; `aicowork app <id>` starts it from the owner's terminal, never an agent. A result an app writes carries `source: app:<id>` (decision `kernel-host-viewer-and-apps`).
-- The weekly review may hint that a lesson whose `[context]` repeats across weeks is ready to become a practice, a decision or a project line — a hint, never a change. Kernel documents: 7,897 of 10,000 words.
-
-### Reference tools
-
-- The triage plan rules live once, in `aicowork_core.triage_plan`, shared by the command and the viewer's `/api/triage/plans` and `/api/triage/apply` (same loopback session and same-origin JSON as Done). (Measured: `test_triage_plans.py`.)
-- Viewer: a `#lesson` line's trailing `[context]` that names an existing file is a link (📎); lessons dated 1, 3 and 12 months ago resurface in "On this day". Cache schema 6 (`lessons.context`), rebuilt by itself.
-- `aicowork new watch` / `new watch-result`; `aicowork app <id>` and `--list`; L1-CONFIG checks `command` (service only, a list of words).
-- Fix: `aicowork reminders --week` without a value printed no summary line.
+- **The kernel**: a triage that would move many items or touch `03_personas/` or `09_decisions/` ends with a plan the owner applies (`06_logs/triage/`); topic watch — a task, a skill, templates, L3-WATCH — files sourced, untrusted results; a `service` app may carry a `command`, started by the owner with `aicowork app <id>`; the weekly review may hint that a recurring lesson is ready to become a practice. Kernel documents: 7,897 of 10,000 words.
+- **Reference tools**: plan Review/Apply in the viewer and `aicowork triage --apply` share one rule set; a lesson's `[context]` that names a file is a link; lessons resurface on this day; `aicowork new watch`, `aicowork app`; fix: `reminders --week` without a value.
 
 ## 0.0.1-rc.5 — 2026-10-08 (release candidate, not for publication) — reminders complete, honest dry-runs
 
-### The kernel
+Full notes: `docs/releases/0.0.1-rc.5.md`.
 
-- **`notice:` on a reminder** (CONVENTIONS "Reminders" rule 8): an upcoming window is shown within `notice` days of `first` when set, else within the dashboard horizon as before. Optional, a whole number of days; the schema, the template and the example instance (`notice: 7`) carry it. Due, overdue and expired never change.
-- **Keep an eye has an order** (morning brief, L3-BRIEF): overdue → due → hot (within `dashboard.hot_days`) → upcoming, nearest first; at most 5 lines, then one line `+N more`.
-- **Reminders missed this week** (weekly review): `missed` stays cumulative in the file (rule 9); the week's number is the field now minus the field at the week's first commit, read from git; without git the review says "not computable", never a guess. The weekly template's Numbers line reads `Reminders done / overdue / missed`.
-- Decision record `kernel-host-viewer-and-apps`: aicowork = kernel + host + viewer; everything else is an app registered by link; reading is a surface, writing is audited. Kernel documents: 7,805 of 10,000 words.
-
-### Security
-
-- **A dry run runs the binding gate** (`docs/controls.md` C34). `backup --dry-run` and `export --dry-run` skipped the trust-anchor check, so a drifted or unanchored policy got a would-be file name while the real run refused (found during the rc.4 upgrade test). A dry run now refuses the same way and still writes nothing. (Measured: `test_dry_run_runs_the_binding_gate`.)
-
-### Reference tools
-
-- `aicowork reminders`: every active reminder with its state, `last_done` and `missed`; `--week [YYYY-Www]` adds done this week, overdue now and missed this week (from git); `--json`.
-- `recur`: `Rule.notice`, validated like the other fields; `state()` walks to `notice` or to the horizon.
-
-### The repository
-
-- The development repository is public from here on (decision `kernel-repo-split`, addendum 2026-10-08): `LICENSE` (MIT) at the repository root, carried by the full artifact too; `devkit leakscan` and the git hooks run in a contributor's clone without a private instance, with the generic patterns only (`devkit package` still needs a private instance). CONTRIBUTING says so.
+- **The kernel**: `notice:` on a reminder (days of warning); Keep an eye ordered overdue → due → hot → upcoming, at most five lines; reminders missed this week counted from git, or "not computable"; decision record `kernel-host-viewer-and-apps`. Kernel documents: 7,805 of 10,000 words.
+- **Security**: a dry run of `backup` or `export` runs the binding gate like the real run (C34).
+- **Reference tools**: `aicowork reminders` with `--week` and `--json`; `recur` knows `notice`.
+- **The repository**: public from here on (MIT `LICENSE`); `devkit leakscan` and the hooks run in a contributor's clone with the generic patterns.
 
 ## 0.0.1-rc.4 — 2026-10-06 (release candidate, not for publication) — reminders
 
-### The kernel
+Full notes: `docs/releases/0.0.1-rc.4.md`.
 
-- **Reminders** (Stance): a new content type for dated duties that repeat — "check the account on the 15th and 16th of every month". One file per duty in `10_reminders/<slug>.md` (`type: reminder`, `repeat` weekly/monthly/yearly, `days`, `date`, optional `until`, `status`); its only state is `last_done`. CONVENTIONS "Reminders" states nine occurrence rules — clamp, windows, range, open window, upcoming/due/overdue (with missed windows), expired, not computed, shown with the existing "upcoming" signal, Done — so any implementation computes the same answer. The key is `days`, never `on` (YAML 1.1 reads `on` as true). A practice is measured by presence, a reminder by done, an event happens once.
-- Reminders stay out of the circle-balance chart: duties, not presence (PHILOSOPHY #8). No new dashboard signal (#9).
-- Schema, template `reminder.md`, REBUILD §1 (`10_reminders/`, `## Reminders`), conformance (L1-KERNEL, L1-FRONTMATTER, L2 scopes `00_`–`10_`, L3-BRIEF lists the example instance's reminder). The morning brief lists due, overdue and expired reminders and upcoming ones in the horizon; triage files duties into `10_reminders/`; the weekly review counts reminders done and overdue. Kernel documents: 7,356 of 10,000 words.
-
-### Security (red-team of 2026-10-06, asked for by the owner)
-
-Six attacks were run against a test instance; three went through, one crashed every command. Each is now refused or reported, with a rule in the kernel and a test in the tools (`docs/controls.md` C28–C31):
-
-- **A policy rewritten in an agent session could still export** (K). `decided:` is in force only while `policy.yaml` matches the owner's trust anchor, which now binds every file that steers the agent (the policy, the `security` block of `aicowork.yaml`, the instruction file, `check_tokens`, `modules.lock`); `export` and `backup` refuse on drift or without an anchor, `--allow` does not bypass it, `decide` anchors by itself, `doctor` and the viewer say when a steering file drifted. Owner action in UPGRADING: run `aicowork anchor`. (Measured: `test_export_refuses_policy_drift`.)
-- **A sender's own `visibility: public` survived triage** (T). `triage --apply` makes every filed note private. (Measured: `test_triage_apply_forces_private`, red-team fixture 31.)
-- **The owner's name hidden by look-alike or invisible characters, a soft line break, percent, entity or base64 encoding passed the content check** (I). The leak gate matches after undoing those layers (`fixtures/leak/`, L2-LEAK-NORM); hidden characters that match nothing are reported with file and line (L2-HIDDEN, `06_logs/conformance/<date>_hidden-chars.md`) and counted in the export receipt. What is not undone is listed in SECURITY "not claimed". (Measured: `test_export_refuses_every_leak_fixture_and_reports_hidden_chars`.)
-- **One symbolic link crashed `reach`, `doctor`, `conform` and `export`** (G). Links are reported (L2-REACH-LINK, an error when they point outside the folder) and never followed. (Measured: `test_symlink_reported_not_followed`.)
-- INDEX titles are the agent's own words, checked (L2-INDEX-CLEAN, fixture 32); app targets are http(s) or loopback. A hash in `index.db` would be one more marker inside the agent's reach — trust hashes live only in the anchor (98_tools/REBUILD.md). The ceiling on a host where the agent has the owner's profile is stated in `hosts/claude-code.md` (Stance; tamper-evident, not tamper-proof).
-
-### Reference tools
-
-- The occurrence rules are implemented once, in `aicowork_core.recur` (standard library, pure functions; Measured by `libs/core/tests/test_recur.py`: clamp, leap day, windows across periods, weekly weekend, until inclusive, expired, missed windows, years without an end, invalid rules, the `on:` trap).
-- Conformance checks a reminder's `repeat`/`days`/`until`/`status`; a missing `10_reminders/` or `## Reminders` says it is new in this version and points here. `init` creates both; `new reminder`; triage may move into `10_reminders/`; `doctor` prints "reminders: N due, M overdue, K expired".
-- Viewer: reminders join "Keep an eye" with their state (in N d, due today, overdue N d · N missed, expired) and a **Done** button. Done (`POST /api/reminder/done`) writes `last_done` — today by default, never in the future or before `date` — and adds the windows it skips to `missed` (a reference count; done late is not missed), and changes no other byte of the file (comments, order and CRLF kept; mtime guard). The cache schema is 5 and rebuilds by itself; deleting it gives the same answer.
+- **The kernel**: reminders, a tenth content type for dated duties that repeat — one file per duty in `10_reminders/`, nine occurrence rules so every implementation computes the same answer, `last_done` as the only state; out of the circle-balance chart. Kernel documents: 7,356 of 10,000 words.
+- **Security** (red-team of 2026-10-06, controls C28–C31): the trust anchor binds every file that steers the agent and egress refuses on drift — owner action `aicowork anchor`; a sender's `visibility: public` is made private on filing; owner names hidden by look-alike characters or encodings are matched after normalisation and hidden characters are reported; symlinks are reported, never followed; INDEX titles are checked.
+- **Reference tools**: the occurrence rules once, in `aicowork_core.recur`; conformance, `init`, `doctor` and triage know reminders; the viewer lists them in Keep an eye with a Done button.
 
 ## 0.0.1-rc.3 — 2026-10-03 (release candidate, not for publication) — fixes from two reviews of rc.2 and its first real use
 
-### The kernel
+Full notes: `docs/releases/0.0.1-rc.3.md`.
 
-- **Ambiguity is an error, never a guess** (CONVENTIONS "Visibility & egress"). `conformance/ambiguity.json` lists the ways a note can be read two ways — frontmatter that is not cleanly fenced or not in the YAML subset, a `visibility` key or value that only looks right, nested, orphaned or lookalike private-block markers, including a marker that lost its closing `-->` — each with a fixture. Such a note reads as private and every export refuses until a person fixes it; naming the file does not override this. New conformance cases L2-AMBIGUITY and L1-ROOT (`INDEX.md` sections, `modules.lock`).
-- "Nothing leaves silently" now reads "No export leaves silently": what the assistant reads goes to its provider, without a receipt.
-- **`decided:` is the owner's, always.** The instruction file, CONVENTIONS and REBUILD say that an agent never writes `decided:` in `policy.yaml`, even when asked: the owner adds it on their own computer.
-- REBUILD §1 lists exactly the `.gitignore` and `.gitattributes` lines that `init` writes (Windows scripts keep CRLF).
-- The 10,000-word budget counts the kernel's six documents, listed in `99_system/README.md` — PHILOSOPHY, CONVENTIONS, REBUILD, conformance SUITE, host contract, instruction file — not skills, tasks, templates or modules (owner, 2026-10-03).
-- CONVENTIONS "Modules": the files of a module are sorted by their path compared character by character, not case-insensitively — the same `modules.lock` on every OS, by the text alone. PHILOSOPHY's last Vietnamese heading is now English.
-- Retired kernel files that `upgrade` archives (`07_archive/kernel-<version>/`) are not notes: conformance does not judge them as notes and export never takes them. Their templates keep `{{…}}` placeholders, which L2-AMBIGUITY would otherwise refuse after every upgrade that removes one.
-
-### Reference tools
-
-- Viewer: the search bar and the dashboard share one centred column (at most 1,360 px wide). On a wide screen the spare room is split evenly on both sides, instead of the search bar stretching across the screen while the cards stopped at 1,000 px and left the right side empty. Below that width nothing changes, except that the cards no longer stop at 1,000 px.
-- One strict parser reads every note's frontmatter (it used to be a lenient second parser that read `visibility: "public` as public and let a nested `visibility: public` override the real one). Quoted values are decoded exactly as YAML says (`\"`, `''`, `\x..`, `\u....`); an unknown escape is an error, not literal text.
-- Export finds private blocks by their grammar, not by counting markers: nested blocks and a block closed before it opens refused nothing before and leaked the private tail. A marker missing its `-->` is caught too.
-- A prohibited marker is checked in the whole original file, before private blocks are stripped.
-- A note with Windows line endings has its frontmatter reduced on export like any other (before, every key left with it).
-- `03_personas/me.md` is read exactly: no frontmatter, an empty one, or a `check_tokens` the parser cannot read makes every leak gate refuse, instead of scanning for nothing.
-- The same bytes and hashes on every OS: module locks, ring manifests and release zips list files by their POSIX path (Windows sorted them differently, so the same module had two hashes), every file the tools write uses LF, and a release carries `aicowork.bat` with CRLF whatever the building machine holds.
-- `aicowork decide`: the owner decides `policy.yaml` at an interactive terminal on the host, by typing today's date; it refuses inside an agent's sandbox and without a terminal.
-- `upgrade --apply` records, by hash, every file it wrote (`06_logs/upgrade/<date>_<from>_to_<to>.json`); `audit` accepts exactly those files with one warning to confirm the upgrade, and still flags anything edited afterwards. Kernel text and fixtures are no longer judged as notes by audit (it flagged the release's own fixtures as "visibility raised").
-- `doctor` names what is uncommitted (up to five paths); the receipt that a backup or export writes after itself is expected and reported as such.
-- `upgrade` imports everything it needs before it replaces a file (rc.2's stopped halfway when upgrading itself to newer code). Upgrade from rc.2 with the rc.3 tools (UPGRADING).
-- `init` writes the `## Practices` section into `INDEX.md`, writes `modules.lock`, and ends with the one commit REBUILD asks for.
-- **The Python version is written once**, as `requires-python` in `98_tools/pyproject.toml` (3.11; rc.2 claimed 3.9, never tested, and `init` failed there). The entry point, the launchers and the git hooks read it through one small check and say plainly when a Python is too old; no document restates it.
-- With `uv`, the launcher installs the command line only (`--package aicowork`); `aicowork viz` adds the viewer the first time it runs, and `aicowork verify` runs the tests in the whole tools environment. "No network connections" is now said of the commands, which is what the test proves: `uv` may download the locked packages, and a Python, once.
-- The viewer's index no longer fails when a note has a list where a single value belongs (`date: [2026-10-03]`): that field is left empty.
-
-### Development repository (never shipped)
-
-- The pre-commit hook writes the ring manifests first and leak-scans the index after, so the scan reads exactly what the commit holds; it refuses while a ring has untracked files. The pre-push hook scans every blob and commit message being pushed and counts as already sent only what the receiving remote has, not what another remote has.
-- One reviewed false alarm (owner, 2026-10-03): the AI assistant's no-reply address in `Co-Authored-By:` trailers, recorded by hash in `90_devkit/leak-reviewed.json`; anything else still refuses.
-- A release build refuses a shipped document that claims nothing leaves without naming the model-call exception.
-- `devkit fixtures --check`: the generator reproduces the committed fixtures byte for byte (tested).
-- A release build refuses when VERSION, the tools' package versions and `uv.lock` disagree, or when the fixtures are not what the generator writes: a stale lock would break every user's `uv run --locked`.
-
-### Host pages
-
-- Claude Cowork: `uv` works behind the inspecting proxy with `system-certs = true`; a scheduled task's "succeeded" is not evidence — bind each task to the computer and judge it by the file it writes.
-
-### Documents
-
-- README: the first steps say plainly that, once an assistant is connected, the files it opens go to the AI service; the files-only path now includes the rebuild step that creates `INDEX.md`, `aicowork.yaml` and `policy.yaml`.
+- **The kernel**: ambiguity is an error, never a guess — a note that can be read two ways is private and refuses every export (L2-AMBIGUITY, `conformance/ambiguity.json`, a fixture per class); "No export leaves silently"; `decided:` is the owner's alone, never an agent's; REBUILD lists the exact `.gitignore` and `.gitattributes`; the 10,000-word budget counts six documents; module files sort by code point on every OS; retired kernel files are not notes.
+- **Reference tools**: one strict frontmatter parser; private blocks found by their grammar; the same bytes and hashes on every OS; `aicowork decide` at the owner's own terminal; `upgrade --apply` records what it wrote and `audit` accepts exactly that; `doctor` names uncommitted paths; upgrade from rc.2 with the rc.3 tools; `init` writes `## Practices`, `modules.lock` and the first commit; the viewer's search bar and dashboard share one centred column.
 
 ## 0.0.1-rc.2 — 2026-10-03 (release candidate, not for publication)
 
-_Supersedes 0.0.1-rc.1 (built the same day, never installed)._
-First release candidate of the first versioned release. Earlier internal version numbers are retired.
+Supersedes rc.1 (built the same day, never installed): the first candidate of the first versioned release. Full notes: `docs/releases/0.0.1-rc.2.md`.
 
-### The kernel (`99_system/`) — the specification
-
-- What the kernel is: a specification, not software. Five-point membership test; four rings (kernel, host adapters, reference tools, instance). English only; ≤ 10,000 words of prose.
-- `PHILOSOPHY.md` (12 principles, each labelled with how it is evidenced), `CONVENTIONS.md` (folders, frontmatter, visibility and egress, modules, instance config), `REBUILD.md` (build an instance from the text alone, no tools needed).
-- `host-contract.md` (the four things any assistant host must provide), `instruction-file.md`, schemas, policy presets, templates, three skills (inbox triage, morning brief, weekly review), scheduled-task prompts, the `7habits` module.
-- `conformance/`: what "working correctly" means, levels L1–L3, with a fictional example instance.
-
-### Host adapters (`hosts/`)
-
-- Claude Cowork (verified 2026-10-01) with a hardening guide for IT; Claude Code and GitHub Copilot (documented, not yet verified).
-
-### Reference tools (`98_tools/`) — optional
-
-- `aicowork` command, standard library only (Python ≥ 3.9): `init`, `doctor`, `conform`, `audit`, `reach`, `backup`, `export`, `unseal`, `upgrade`, `denylist`, `verify` and more (`98_tools/README.md`). A local, offline viewer (`aicowork viz`, needs `uv`).
-- Nothing leaves the folder except through `backup` and `export`, both governed by `policy.yaml`, both leaving a hash-chained receipt. A fresh policy refuses every copy until its owner adds `decided:`.
-- Export is content-checked (owner names, organisation, personas, e-mail addresses, keys, paths); a hit refuses unless the owner names the file, and that is recorded. `below: encrypt` seals what must not travel in clear (AES-256-GCM, key from the owner's passphrase).
-- Release artifacts are built from a committed, manifest-clean tree and pass two leak scanners; a failed artifact is quarantined. The deny-list is built from the owner's own instance, never shipped.
-- `upgrade` checks the published sha256, refuses to overwrite local edits or to downgrade without saying so, and prints what the owner must change by hand.
-- No network connections (tested).
-
-### Changed since the last internal build
-
-- The kernel's development moved to its own repository, which holds no owner data. Releases are built there with the devkit; the leak gate reads the deny-list from the owner's private instance (`devkit package --deny-from`, or `git config aicowork.denyFrom`). Every commit and push of that repository is leak-scanned (`devkit leakscan`, git hooks).
-- `98_tools/` layout: `libs/core/` (shared library `aicowork_core`: settings, folder contract, safe paths, leak scanners…), `apps/aicowork/` (the command line, commands grouped in `commands/`), `apps/viewer/`; one uv workspace and one environment at `98_tools/`. Import rules are tested: apps build on libraries only, never on each other; the command line no longer needs the viewer's code.
-- Release building (`package`, `leakscan`, fixtures) moved to the developer's `90_devkit/`, which never ships (the build refuses any `90_`–`95_` folder). Export and release builds share one leak-scanner implementation.
-- `init` also copies the tools, launchers and hooks it came with, and writes the kernel version into `aicowork.yaml`.
-- One download for new users: `aicowork-<version>.zip` holds the kernel and the tools (the separate kernel and tools zips remain, for the specification alone and for upgrades). The launchers run on plain Python 3.9+ when `uv` is not installed (everything but the viewer).
-- Versions may carry a pre-release suffix (`0.0.1-rc.1`); `upgrade` orders them correctly (rc.1 < rc.2 < 0.0.1).
-
-### Known limits
-
-See `SECURITY.md` "What we do NOT claim". In short: the assistant's provider sees what the assistant reads; there is no protection against an owner who sets out to leak their own data; no external security review yet.
+- **The kernel**: a specification, not software — a five-point membership test, four rings, English, at most 10,000 words; PHILOSOPHY, CONVENTIONS, REBUILD, the host contract, the instruction file, schemas, policy presets, templates, three skills, scheduled tasks, the `7habits` module, conformance L1–L3 with a fictional example instance.
+- **Host adapters**: Claude Cowork verified 2026-10-01, with a hardening guide for IT; Claude Code and GitHub Copilot documented, not verified.
+- **Reference tools** (optional): the `aicowork` command (standard library, Python 3.9+) and an offline viewer; nothing leaves the folder except through `backup` and `export` under `policy.yaml`, each with a hash-chained receipt; export is content-checked, `below: encrypt` seals what must not travel in clear; `upgrade` checks the published sha256; no network connections (tested).
+- **The repository**: the kernel's own repository, holding no owner data, leak-scanned on every commit and push; `98_tools/` as libraries and apps in one environment; `90_devkit/` builds releases and never ships; one download for new users; pre-release versions ordered.
+- **Known limits**: SECURITY "What we do NOT claim".

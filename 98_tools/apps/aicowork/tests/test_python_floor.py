@@ -48,14 +48,14 @@ def test_the_guard_runs_as_a_script():
 
 def test_no_file_restates_the_floor():
     """Documents point to pyproject.toml; launchers, hooks and the entry point ask
-    pyfloor.py. History stays as written: CHANGELOG.md and .agents/ are records."""
+    pyfloor.py. History stays as written: CHANGELOG.md, docs/releases/ and .agents/ are records."""
     files = [REPO / "aicowork.sh", REPO / "aicowork.bat", *(REPO / ".githooks").glob("*")]
     files += [p for p in REPO.rglob("*") if p.is_file() and p.suffix in (".md", ".py", ".toml", ".sh", ".bat")
               and not ({".venv", "node_modules", ".git", ".agents", "_scratch", "__pycache__"} & set(p.relative_to(REPO).parts))]
     found = []
     for p in sorted(set(files)):
         rel = p.relative_to(REPO).as_posix()
-        if rel in ("CHANGELOG.md", "98_tools/apps/aicowork/tests/test_python_floor.py"):
+        if rel in ("CHANGELOG.md", "98_tools/apps/aicowork/tests/test_python_floor.py") or rel.startswith("docs/releases/"):   # records, as written
             continue
         for m in CLAIM.finditer(p.read_text(encoding="utf-8", errors="replace")):
             found.append(f"{rel}: {m.group(0)}")
