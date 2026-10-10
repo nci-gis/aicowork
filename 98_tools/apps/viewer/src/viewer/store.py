@@ -132,6 +132,17 @@ def search(q):
     return out
 
 
+def open_counts():
+    """Items per kind that are not closed (config.CLOSED_STATUSES): what the sidebar
+    shows, so a done project or an archived note does not keep counting."""
+    from .config import CLOSED_STATUSES
+    con = db()
+    marks = ",".join("?" * len(CLOSED_STATUSES))
+    return dict(con.execute(
+        f"SELECT kind, COUNT(*) FROM files WHERE status IS NULL OR status = '' "
+        f"OR lower(status) NOT IN ({marks}) GROUP BY kind", sorted(CLOSED_STATUSES)))
+
+
 def counts_and_balance(circles, content_kinds):
     con = db()
     counts = dict(con.execute("SELECT kind, COUNT(*) FROM files GROUP BY kind"))

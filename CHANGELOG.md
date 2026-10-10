@@ -17,6 +17,7 @@ The five steps of README "The safest first step" were run on Linux from the rc.6
 
 ### Reference tools
 
+- Viewer: Browse opens on **Open** items — not `done`, `archived`, `cancelled`, `superseded` or `deferred` — and the sidebar counts open items, the total on hover; "Any status" is one click away. A finished project or an archived note kept showing in every list and count (owner, first weeks of use). The kernel's `status` stays free text; the five closed values are the viewer's reading of it. (Measured: `test_browse_defaults_to_open_items_and_the_sidebar_counts_them`.)
 - `aicowork triage --apply` sets the `Last triage:` footer (the apply finishes the triage) and ends by saying how to commit — the tool moves, the owner records (`triage: apply <plan>`). `devkit package` refuses when `aicowork.example.yaml`'s `kernel_version` is not `VERSION`.
 - `init` ends with the commands a new owner can actually type: `./aicowork.sh doctor` (`aicowork.bat doctor` on Windows), not a bare `aicowork`; and it says that the first commit asks who you are, with the two `git config` lines. (Measured: `test_init_next_steps_name_the_launcher_and_the_git_identity`.)
 - `aicowork sbom --out dist/sbom.cdx.json` on a fresh checkout tracebacked because `dist/` did not exist; the folder is created. (Measured: `test_sbom_out_creates_the_parent_folder`.)

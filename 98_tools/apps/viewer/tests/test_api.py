@@ -210,3 +210,22 @@ def test_data_reports_the_trust_anchor_state(client, monkeypatch, tmp_path):
     pol.write_text(pol.read_text(encoding="utf-8").replace("private", "controlled"), encoding="utf-8")
     assert client.get("/api/data").json()["anchor"] == {"state": "drift", "drifted": ["policy.yaml"]}
     pol.unlink()
+
+
+# ---- the default view is what is open (owner, 2026-10-10) ----
+
+def test_browse_defaults_to_open_items_and_the_sidebar_counts_them(client):
+    """A done or archived item stayed in every list and every count; "Open" is now the
+    default filter (not done/archived/cancelled/superseded/deferred) and the sidebar
+    counts open items, with the total beside it."""
+    done = BASE / "01_events" / "2026-01-02_finished.md"
+    done.write_text("---\ntype: event\nvisibility: private\ncircle: work\ndate: 2026-01-02\nstatus: done\n---\n# Finished needle\n", encoding="utf-8")
+    try:
+        paths = lambda status: {i["path"] for i in client.get(f"/api/search?q=needle&status={status}").json()["items"]}
+        assert "01_events/2026-01-02_finished.md" not in paths("open")
+        assert "01_events/2026-01-02_finished.md" in paths("")
+        assert "01_events/2026-01-02_finished.md" in paths("done")
+        d = client.get("/api/data").json()
+        assert d["counts_all"]["event"] == d["counts"]["event"] + 1
+    finally:
+        done.unlink()
