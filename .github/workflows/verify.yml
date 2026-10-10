@@ -1,0 +1,29 @@
+# The gate on every push and pull request: conformance on the example
+# instance, ring manifests, receipts, every test suite — `aicowork verify`.
+#
+# From `docs/ci/verify.yml.template`. Every `uses:` is pinned to a full commit
+# SHA (tags can be moved; SHAs cannot); the tag beside it is what the SHA was
+# resolved from, and the owner verified each one before enabling this file.
+# `permissions:` stays read-only; add `id-token: write` only for a
+# signed-provenance job.
+#
+# Release zips are built by the owner, locally: `devkit package` needs the
+# owner's private instance for its deny-list, which never goes to CI.
+name: verify
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv sync --locked --project 98_tools
+      - run: uv run --locked --project 98_tools aicowork verify
+      # generic patterns only: a contributor's clone names no private instance;
+      # the maintainer's own pre-push hook scans against theirs
+      - run: PYTHONPATH=90_devkit/src uv run --locked --project 98_tools python -m devkit leakscan
+      - run: uv run --locked --project 98_tools aicowork sbom --out dist/sbom.cdx.json
+      - run: uvx pip-audit -r <(uv export --project 98_tools --no-hashes) || true # advisory until triaged
+      # uv audit (preview in 2026) may replace pip-audit once stable
