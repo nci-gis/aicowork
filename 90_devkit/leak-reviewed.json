@@ -1,6 +1,15 @@
 {
   "schema": 1,
   "about": "False alarms of the leak scanners that the owner reviewed and decided. Each entry is as narrow as the case: one value (by its SHA-256, so the value itself is never written here), one place. Anything not listed still refuses. Decision: .agents/decisions/2026-10-03_ambiguity-fails-closed.md, addendum 1.",
+  "commit_identities": [
+    {
+      "sha256": "e20bcc402a910fde3f1228128c29cbcd8dbf1f9b43be1b14689042a983cd8947",
+      "what": "the maintainer's public git identity (`name <email>`, lower-case), author and committer of every commit of this public repository",
+      "why": "the identity the public history already carries on every commit; any other identity in a commit is scanned like a blob",
+      "decided": "2026-10-10",
+      "by": "owner"
+    }
+  ],
   "commit_trailer_addresses": [
     {
       "sha256": "cd29c5ac348a026a3ec5286890908fffb5bf6ab77f20672171be323a70c95026",

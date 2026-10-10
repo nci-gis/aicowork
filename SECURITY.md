@@ -47,6 +47,7 @@ A folder of plain Markdown files that an AI agent reads and writes inside a host
 - That the leak gate catches every obfuscation. Claim: it undoes the layers listed in CONVENTIONS "Session rules" 5 (look-alike and invisible characters, soft breaks, percent, entity and base64 encodings — `fixtures/leak/`, L2-LEAK-NORM), reports hidden characters it cannot read (L2-HIDDEN), and nothing more.
 - Any protection of the policy or the instruction file before the owner has run `aicowork anchor` on their own computer — and, on a host where the agent runs with the owner's own profile, the anchor itself is within the agent's reach (threat 10: tamper-evident, not tamper-proof).
 - SLSA levels or reproducible builds (not yet verified).
+- That a leak already pushed can be undone by the tools. A force-push removes the commits from the branch, but the hosting service keeps unreachable commits fetchable by hash until it purges them (on request, or in time); and whoever fetched meanwhile has them. The scans exist to refuse the push — before it, not after.
 
 ## Reporting a vulnerability
 

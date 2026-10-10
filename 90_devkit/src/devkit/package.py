@@ -108,6 +108,7 @@ def scan_tree(base, deny_from=None):
             if _scannable(f) and (src / f).is_file():
                 (Path(td) / f).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src / f, Path(td) / f)
+        configured_identity_file(base, td)      # the identity the next commit would carry
         hits = [("A " + r, m) for r, m in scan_tokens(td, tokens, paths)]
         hits += [("B " + r, m) for r, m in scan_generic(td)]
     return hits, deny_src
@@ -166,6 +167,42 @@ def reviewed_trailer_addresses(base):
             if isinstance(e, dict) and isinstance(e.get("sha256"), str) and e.get("decided")}
 
 
+def reviewed_identities(base):
+    """SHA-256 of `name <email>` (lower-case) git identities the owner reviewed
+    (90_devkit/leak-reviewed.json `commit_identities`): the public identity every
+    commit of a public repository carries anyway. Anything else is scanned."""
+    try:
+        data = json.loads((Path(base) / LEAK_REVIEWED).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    return {e["sha256"] for e in data.get("commit_identities", [])
+            if isinstance(e, dict) and isinstance(e.get("sha256"), str) and e.get("decided")}
+
+
+def identity_text(name, email, reviewed):
+    """`name <email>` for the scanners, or None when the owner reviewed that identity.
+    A commit's author and committer leave with the push like any blob (2026-10-10:
+    fifteen commits carried an employer's address while the scan read only blobs
+    and messages)."""
+    ident = f"{(name or '').strip()} <{(email or '').strip()}>"
+    if hashlib.sha256(ident.lower().encode("utf-8")).hexdigest() in reviewed:
+        return None
+    return ident + "\n"
+
+
+def configured_identity_file(base, td):
+    """What the next commit would be signed as, written into the scan folder."""
+    if not C.is_git(base):
+        return
+    _, name = C.git(base, "config", "--get", "user.name")
+    _, email = C.git(base, "config", "--get", "user.email")
+    if not name.strip() and not email.strip():
+        return                                   # nothing configured: git itself will refuse the commit
+    text = identity_text(name, email, reviewed_identities(base))
+    if text:
+        (Path(td) / "git-identity (user.name, user.email of this clone).txt").write_text(text, encoding="utf-8", newline="\n")
+
+
 def drop_reviewed_trailers(msg, reviewed):
     """A commit message without the trailer lines whose address the owner reviewed.
     Only `Co-Authored-By:` lines, only listed addresses: everything else is scanned."""
@@ -208,12 +245,19 @@ def scan_pushed(base, updates, deny_from=None, remote=None):
                 f = Path(td) / sha[:12] / path
                 f.parent.mkdir(parents=True, exist_ok=True)
                 f.write_bytes(body)
-        log = _git_bytes(base, "log", "--format=%H%n%B%x00", *revs).decode("utf-8", "replace")
+        log = _git_bytes(base, "log", "--format=%H%n%an%n%ae%n%cn%n%ce%n%B%x00", *revs).decode("utf-8", "replace")
         reviewed = reviewed_trailer_addresses(base)
+        reviewed_ids = reviewed_identities(base)
         for entry in log.split("\0"):
-            sha, _, msg = entry.strip("\n").partition("\n")
-            if sha:
-                (Path(td) / f"commit-{sha[:12]}.txt").write_text(drop_reviewed_trailers(msg, reviewed), encoding="utf-8", newline="\n")
+            parts = entry.strip("\n").split("\n", 5)
+            if len(parts) < 5 or not parts[0]:
+                continue
+            sha, an, ae, cn, ce = parts[:5]
+            msg = parts[5] if len(parts) > 5 else ""
+            (Path(td) / f"commit-{sha[:12]}.txt").write_text(drop_reviewed_trailers(msg, reviewed), encoding="utf-8", newline="\n")
+            for who, text in (("author", identity_text(an, ae, reviewed_ids)), ("committer", identity_text(cn, ce, reviewed_ids))):
+                if text:
+                    (Path(td) / f"commit-{sha[:12]}-{who}.txt").write_text(text, encoding="utf-8", newline="\n")
         hits = [("A " + r, m) for r, m in scan_tokens(td, tokens, paths)]
         hits += [("B " + r, m) for r, m in scan_generic(td)]
     return hits, deny_src
