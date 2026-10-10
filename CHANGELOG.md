@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased — findings of the first clean-room dry run (Round 001)
+
+The five steps of README "The safest first step" were run on Linux from the rc.6 zip alone, with a fresh home folder, then a non-interactive Claude Code session did "triage my inbox" (`hosts/claude-code.md`, verified rows). What the text got wrong is fixed here; what the kernel text gets wrong waits for the owner (`.agents/memory/2026-10-09-clean-room-findings-kernel.md`).
+
+### Reference tools
+
+- `init` ends with the commands a new owner can actually type: `./aicowork.sh doctor` (`aicowork.bat doctor` on Windows), not a bare `aicowork`; and it says that the first commit asks who you are, with the two `git config` lines. (Measured: `test_init_next_steps_name_the_launcher_and_the_git_identity`.)
+- `aicowork sbom --out dist/sbom.cdx.json` on a fresh checkout tracebacked because `dist/` did not exist; the folder is created. (Measured: `test_sbom_out_creates_the_parent_folder`.)
+
+### Documents
+
+- README step 2 names the launcher (`./aicowork.sh` / `aicowork.bat`); step 4 names the placeholders `me.md` really has (`<…>`, empty `Name:` / `Org:`), not `{{…}}`.
+- `docs/clean-room-test.md`: the sheet for the non-expert tester of gate G5 — what to write down at each step, and the question log.
+- `hosts/claude-code.md`: H1, H3 and the mechanism of H4 verified on 2026-10-09 (Claude Code 2.1.201); a `-p` session needs its allow-list on the command line.
+
+### The repository
+
+- CI (`.github/workflows/verify.yml`): `aicowork verify`, `devkit leakscan` (generic patterns), SBOM and an advisory `pip-audit` on every push and pull request; actions pinned to commit SHAs.
+
 ## 0.0.1-rc.6 — 2026-10-08 (release candidate, not for publication) — the viewer and the apps
 
 ### The kernel
