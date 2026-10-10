@@ -92,3 +92,9 @@ The kernel stays within its budget (9,966 of 10,000 words).
 **Source**: owner, in session — "Flip r001 to complete. Then start r002. I wanna both rounds release in v0.0.1-rc.7".
 **Rationale**: closing a round and starting one are human calls (PDCA); the owner made both. Round 001's steps 5 and 9 move to the release track (`v0.0.1-plan.md` R3, R6) and gate the final 0.0.1. Round 002 (tags as the link between items) ships in the rc.7 candidate at the owner's decision, noted against the fixed point's "features come after" in both files.
 **Promoted by**: the owner (instruction in session), carried out by the agent
+
+## 2026-10-10: tags are the link → kernel `99_system/` (Round 002)
+
+**Source**: owner, in session ("pls proceed B") on `memory/2026-10-10-tags-link-decision-draft.md`.
+**Rationale**: the agent changed `99_system/` (read-only to agents) on the owner's instruction: CONVENTIONS "Core keys" (`tags` as slugs, the link, a project's slug, `related:` the pointer), SUITE L1-FRONTMATTER (`tags` a list of slugs, warning otherwise), the inbox-triage skill (the agent gives a filed note the tags it shares). The decision record stays for the owner to place.
+**Promoted by**: the owner (instruction in session), carried out by the agent
