@@ -8,10 +8,13 @@ The five steps of README "The safest first step" were run on Linux from the rc.6
 
 - `init` ends with the commands a new owner can actually type: `./aicowork.sh doctor` (`aicowork.bat doctor` on Windows), not a bare `aicowork`; and it says that the first commit asks who you are, with the two `git config` lines. (Measured: `test_init_next_steps_name_the_launcher_and_the_git_identity`.)
 - `aicowork sbom --out dist/sbom.cdx.json` on a fresh checkout tracebacked because `dist/` did not exist; the folder is created. (Measured: `test_sbom_out_creates_the_parent_folder`.)
+- `06_logs/triage/` is part of the skeleton: REBUILD §1 lists it and SUITE L1-SKELETON means "every folder of REBUILD §1", but `init` did not create it and the check did not ask for it (found by the rebuild drill, gate G4). `init` creates it, L1-SKELETON checks it ("new in kernel 0.0.1-rc.6" while missing), the example instance has it; UPGRADING says to create it. (Measured: `test_init_creates_every_folder_of_rebuild_section_1`.)
+- A triage plan cannot move a raw inbox item into a folder where L1-FRONTMATTER judges notes: the agent prepares the note (frontmatter, markers) and the owner only moves it. A plan applied in the clean-room run filed a one-line idea into `09_decisions/` as it was, and conformance failed on the result. `05_results/` and `07_archive/` still take any file. (Measured: `libs/core/tests/test_triage_plan.py`.)
 
 ### Documents
 
-- README step 2 names the launcher (`./aicowork.sh` / `aicowork.bat`); step 4 names the placeholders `me.md` really has (`<…>`, empty `Name:` / `Org:`), not `{{…}}`.
+- README step 2 names the launcher (`./aicowork.sh` / `aicowork.bat`); step 4 names the placeholders `me.md` really has (`<…>`, empty `Name:` / `Org:`), not `{{…}}`, and its `check_tokens` example no longer uses `Example Co` — the kernel's own made-up company, which made L2-OWNER report `CONVENTIONS.md` as a leak for anyone who copied the example.
+- Rebuild drill (gate G4): an agent rebuilt an instance from `99_system/` alone, with no question to the owner; L1 passes. Twelve places where the text made it guess are listed for the owner (`.agents/memory/2026-10-09-rebuild-drill-g4.md`).
 - `docs/clean-room-test.md`: the sheet for the non-expert tester of gate G5 — what to write down at each step, and the question log.
 - `hosts/claude-code.md`: H1, H3 and the mechanism of H4 verified on 2026-10-09 (Claude Code 2.1.201); a `-p` session needs its allow-list on the command line.
 
