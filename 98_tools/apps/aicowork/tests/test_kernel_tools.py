@@ -1340,3 +1340,29 @@ def test_service_app_command_is_validated_and_started_by_the_owner(inst, capsys,
     monkeypatch.setenv("SANDBOX_RUNTIME", "1")                                      # not the owner's host
     assert cli.main(["app", "stub", "--base", str(inst)]) == 2 and not (inst / marker).exists()
     assert cli.main(["app", "stub", "--here", "--base", str(inst)]) == 0 and (inst / marker).is_file()
+
+
+def test_sbom_out_creates_the_parent_folder(tmp_path):
+    """`aicowork sbom --out dist/sbom.cdx.json` on a fresh checkout: `dist/` does not
+    exist yet (CI's first run tracebacked here)."""
+    import argparse
+    from aicowork.commands import check
+    out = tmp_path / "dist" / "sbom.cdx.json"
+    assert check.cmd_sbom(argparse.Namespace(base=str(REPO), out=str(out))) == 0
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert doc["components"], "the SBOM lists the tools' packages"
+
+
+def test_init_next_steps_name_the_launcher_and_the_git_identity(tmp_path, capsys):
+    """What `init` prints is the first thing a new owner follows (README "The safest
+    first step"): the command is the launcher, not a bare `aicowork`, and the first
+    commit needs a git identity — the clean-room run of 2026-10-09 stopped at both."""
+    import argparse
+    from aicowork.commands import instance
+    target = tmp_path / f"n{os.getpid()}z"
+    rc = instance.cmd_init(argparse.Namespace(target=str(target), preset="personal-simple", lang="en", no_tools=False))
+    out = capsys.readouterr().out
+    assert rc == 0 and "instance ready" in out
+    assert "git config user.name" in out and "git config user.email" in out
+    assert "./aicowork.sh doctor" in out and "aicowork.bat doctor" in out
+    assert "aicowork doctor" not in out.replace("aicowork.sh doctor", "").replace("aicowork.bat doctor", "")

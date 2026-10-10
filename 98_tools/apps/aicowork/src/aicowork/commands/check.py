@@ -214,7 +214,9 @@ def cmd_sbom(args):
     doc = evidence.sbom(_base(args))
     text = json.dumps(doc, indent=1)
     if args.out:
-        Path(args.out).write_text(text, encoding="utf-8", newline="\n")
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)   # `--out dist/sbom.cdx.json` on a fresh checkout
+        out.write_text(text, encoding="utf-8", newline="\n")
         print(f"wrote {args.out} ({len(doc['components'])} components)")
     else:
         print(text)
