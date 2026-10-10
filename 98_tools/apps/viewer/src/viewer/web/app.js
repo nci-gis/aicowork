@@ -116,15 +116,17 @@ function browseWith(kind, circle){
   setTab('browse');
 }
 function renderSidebar(){
-  const c = DATA.counts;
+  const c = DATA.counts, all = DATA.counts_all || DATA.counts;   // open items; the archive is what it is
   const curK = $('f-kind').value;
   $('side-types').innerHTML = [
     ['event','Events'],['email','Emails'],['persona','Personas'],
     ['project','Projects'],['log','Logs'],['note','Archive'],
     ['practice','Practices'],['decision','Decisions'],['reminder','Reminders'],
-  ].map(([k,l]) => `<button class="side-type ${TAB==='browse'&&curK===k?'on':''}" data-act="browseKind" data-kind="${k}">
-      <span>${KIND_ICON[k]}&nbsp; ${l}</span><span class="n">${c[k]||0}</span>
-    </button>`).join('');
+  ].map(([k,l]) => {
+    const n = k==='note' ? (all[k]||0) : (c[k]||0), tip = k==='note' ? `${n} archived` : `${n} open · ${all[k]||0} in all`;
+    return `<button class="side-type ${TAB==='browse'&&curK===k?'on':''}" data-act="browseKind" data-kind="${k}" title="${tip}">
+      <span>${KIND_ICON[k]}&nbsp; ${l}</span><span class="n">${n}</span>
+    </button>`; }).join('');
   const curC = $('f-circle').value;
   $('side-circles').innerHTML = ['work','family','friend','health'].map(x =>
     `<button class="pill ${curC===x?'on':''}" data-act="browseCircle" data-circle="${x}">

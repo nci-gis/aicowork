@@ -79,9 +79,10 @@
           <option value="">All circles</option>
           <option>work</option><option>family</option><option>friend</option><option>health</option>
         </select>
-        <select id="f-status" data-change="search">
+        <select id="f-status" data-change="search" title="Open = not done, archived, cancelled, superseded or deferred">
+          <option value="open" selected>Open</option>
           <option value="">Any status</option>
-          <option>upcoming</option><option>active</option><option>done</option>
+          <option>upcoming</option><option>active</option><option>paused</option><option>done</option><option>archived</option>
         </select>
         <span class="count" id="rcount"></span>
       </div>

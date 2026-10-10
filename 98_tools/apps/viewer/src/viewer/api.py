@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import render, scanner, security, store
-from .config import (BASE, CIRCLES, CONTENT_FOLDERS, EDITABLE_ROOTS, WEB_DIR,
+from .config import (is_open, BASE, CIRCLES, CONTENT_FOLDERS, EDITABLE_ROOTS, WEB_DIR,
                      PORT, READABLE_ROOTS, READABLE_ROOT_FILES,
                      RAW_INLINE, RAW_DOWNLOAD, MAX_SAVE_BYTES,
                      HORIZON_DAYS, HOT_DAYS, ENERGY_DAYS, MAX_EVENTS_PER_DAY,
@@ -108,6 +108,7 @@ def api_data():
     occ_from, occ_to = _month_bounds(today.year, today.month)
     since14 = today - dt.timedelta(days=HORIZON_DAYS)
     counts, balance, unassigned = store.counts_and_balance(CIRCLES, list(CONTENT_FOLDERS))
+    open_counts = store.open_counts()
     events = store.events()
     horizon = today + dt.timedelta(days=HORIZON_DAYS)
     upcoming = []
@@ -144,8 +145,11 @@ def api_data():
         "inbox": scanner.scan_inbox(),
         # pending triage plans an agent wrote and stopped at (rc.6, E7): the owner applies
         "triage_plans": _triage_plans(),
-        "counts": {k: counts.get(k, 0)
+        # the sidebar counts what is open; the total stays beside it (owner, 2026-10-10)
+        "counts": {k: open_counts.get(k, 0)
                    for k in list(CONTENT_FOLDERS) + ["log", "note", "decision", "reminder"]},
+        "counts_all": {k: counts.get(k, 0)
+                       for k in list(CONTENT_FOLDERS) + ["log", "note", "decision", "reminder"]},
         "upcoming": upcoming,
         "reminders": reminders,
         # the calendar's current month ±1, so the first paint needs no second request (D7)
@@ -186,7 +190,9 @@ def api_search(q: str = "", kind: str = "", circle: str = "", status: str = ""):
         results = [r for r in results if r["kind"] == kind]
     if circle:
         results = [r for r in results if r["circle"] == circle]
-    if status:
+    if status == "open":            # the default: not done/archived/cancelled/superseded/deferred
+        results = [r for r in results if is_open(r["status"])]
+    elif status:
         results = [r for r in results if r["status"] == status]
     return {"total": len(results), "items": results[:120]}
 

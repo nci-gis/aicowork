@@ -26,3 +26,13 @@ RAW_INLINE = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf"}
 RAW_DOWNLOAD = {".txt", ".csv", ".md", ".pptx", ".docx", ".xlsx", ".ics",
                 ".eml", ".msg", ".zip"}
 MAX_SAVE_BYTES = 1_000_000
+
+# A note's `status` is free text in the kernel; these values mean the item is closed
+# for the owner's day-to-day view (owner, 2026-10-10: "what I have done keeps showing").
+# "open" is the viewer's default filter and what the sidebar counts; the kernel says
+# nothing about it and the Browse view can still show everything.
+CLOSED_STATUSES = frozenset({"done", "archived", "cancelled", "superseded", "deferred"})
+
+
+def is_open(status):
+    return (status or "").strip().lower() not in CLOSED_STATUSES
