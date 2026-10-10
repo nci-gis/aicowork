@@ -32,7 +32,19 @@ Part 3 — ship (owner, `docs/publishing.md` steps 0–4)
 ## Do
 
 - 2026-10-09: the owner's clone was re-pointed at the public repository (its private history, rc.3 and earlier, shares no commit with it and is retired). A stray Outlook metadata stream (`…eml:OECustomProperty`, from a copy through Windows) sat untracked in the inbox fixtures and failed the `99_system` manifest and `test_init_fresh_instance_conforms`; moved out, `verify` PASS (core 126, aicowork 100, viewer 81, devkit 24).
-- 2026-10-09: steps 1 and 3 done; step 2 drafted on branch `chore/round-001`.
+- 2026-10-09: steps 1 and 3 done; step 2 drafted on branch `chore/round-001` (PR #8). CI's first run: `verify` and `leakscan` passed, `sbom --out dist/…` tracebacked (no `dist/`) — fixed in the tool with a test.
+- 2026-10-09, step 4 (G5 dry run, Linux, no sudo so a fresh `HOME` and a bare `PATH` stood in for a new user; rc.6 zips built from `origin/dev`, leak gate clean): steps 1, 2, 4 pass; `doctor: OK — 0 errors`. With `/usr/bin/python3` = 3.10 only, the launcher refused plainly (correct). Steps 3 and 5 with Claude Code 2.1.201, non-interactive: triage followed the skill, stopped with a plan (rc.6 rule), `audit` CLEAN, `triage --apply` moved the item. Findings:
+  - F1 README step 2 and `init`'s "next" list say `aicowork init` / `aicowork doctor`; the shipped command is `./aicowork.sh` / `aicowork.bat`. **Fixed** (README, `init` text, test).
+  - F2 Python-only path with an old Python: clear refusal. No change.
+  - F3 README step 4 says `{{…}}`; `me.md` has `<…>` and empty `Name:` / `Org:`. **Fixed** (README).
+  - F4 `init` already commits, then asks for a commit. **Fixed** (`init` text: "commit what you changed").
+  - F5 the tester's first commit fails without a git identity. **Fixed** (`init` text gives the two lines).
+  - F6 the agent did not run `doctor --quick`: it looked for `aicowork` on PATH, not for the launcher at the root. **Kernel wording** (instruction file step 3) — for the owner, `memory/2026-10-09-clean-room-findings-kernel.md`.
+  - F7 L3-TRIAGE scores a session that ended with a plan as FAIL (item left, footer not today): the skill's Acceptance predates the rc.6 plan rule in the same skill; the scorer follows the Acceptance. **Kernel wording** — same memory file.
+  - F8 `triage --apply` leaves the moves uncommitted and says nothing about it; `doctor` then reports uncommitted changes. Open: say "commit when you are done" in its output, or commit as `triage: apply <plan>`? (owner)
+  - A `-p` session needs `--allowedTools` on the command line (host page H4).
+- 2026-10-09, step 6 (G6): `hosts/claude-code.md` H1, H3 verified, H4's mechanism verified, spike items 1 and 3 dated. Copilot H3 still `?`.
+- 2026-10-09, step 4 deliverable: `docs/clean-room-test.md` (tester sheet + question log).
 
 ## Check
 
