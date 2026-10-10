@@ -3,7 +3,7 @@
 **Date**: 2026-10-09
 **Agent**: Claude (Claude Code session)
 **Confidence**: High (both reproduced in a fresh rc.6 instance; evidence below)
-**Status**: New — for the owner: kernel wording, `99_system/` is read-only to agents
+**Status**: Resolved 2026-10-09 — F6, F7, F9 in the kernel text, F8 decided (the tool moves, the owner commits; `apply` says how), on the owner's instruction (promotions.md)
 **Source**: Round 001 step 4 — README "The safest first step" run from the rc.6 zip, then `claude -p "triage my inbox"` (Claude Code 2.1.201)
 **Review-by**: before the final 0.0.1 build
 

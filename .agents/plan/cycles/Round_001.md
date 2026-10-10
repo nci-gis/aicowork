@@ -45,6 +45,7 @@ Part 3 — ship (owner, `docs/publishing.md` steps 0–4)
   - A `-p` session needs `--allowedTools` on the command line (host page H4).
 - 2026-10-09, step 6 (G6): `hosts/claude-code.md` H1, H3 verified, H4's mechanism verified, spike items 1 and 3 dated. Copilot H3 still `?`.
 - 2026-10-09, step 4 deliverable: `docs/clean-room-test.md` (tester sheet + question log).
+- 2026-10-09, kernel pass (owner: "go ahead to resolve them"; promotions.md): F6, F7, F9 and the drill's text items edited in `99_system/`; the scorer, `triage --apply` (footer; F8: the owner commits, the tool says how) and `devkit package` (example `kernel_version`) follow the text, each with a test. Items 9 (branch name) and 12 (header comments, `circle`) accepted as they are.
 
 ## Check
 

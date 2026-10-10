@@ -3,7 +3,7 @@
 **Date**: 2026-10-09
 **Agent**: Claude (Claude Code session); the rebuild itself by a fresh sub-agent that saw only the folder
 **Confidence**: High (the rebuilt folder was checked with the reference tools and diffed against `init`)
-**Status**: New — the drill REBUILD.md asks for quarterly (first due 2026-11); kernel-text items for the owner
+**Status**: Resolved 2026-10-09 — items 1–8, 10, 11 and the `kernel_version` check in the kernel text and devkit on the owner's instruction (promotions.md); 9 and 12 accepted as is
 **Source**: Round 001 step 7. Host: Claude Code 2.1.201 (sub-agent, no tools, no network). Kernel: 0.0.1-rc.6 (`origin/dev`). Questions asked of the owner: **0**.
 **Review-by**: before the final 0.0.1 build; then 2027-01 (next drill)
 
