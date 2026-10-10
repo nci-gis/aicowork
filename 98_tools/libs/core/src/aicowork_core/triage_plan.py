@@ -67,6 +67,14 @@ def check_plan(base, plan):
             raise PlanError(f"move {i}: destination {m['to']} already exists (no overwrite)")
         if src.stat().st_size > MAX_BYTES:
             raise PlanError(f"move {i}: source larger than {MAX_BYTES} bytes")
+        if C.rel(base, dst).startswith(tuple(f + "/" for f in C.FM_FOLDERS)):
+            # where L1-FRONTMATTER judges the result, the agent prepares the note in the
+            # inbox (frontmatter, markers) and the owner only moves it — a raw item would
+            # land without a `type` (05_results/ and 07_archive/ take any file)
+            meta, _, has = C.frontmatter(src)
+            if not has or not meta.get("type"):
+                raise PlanError(f"move {i}: {m['from']} has no frontmatter with a type — "
+                                "the agent prepares the note before the owner moves it")
         seen.add(str(dst).lower())
         out.append((src, dst))
     return out

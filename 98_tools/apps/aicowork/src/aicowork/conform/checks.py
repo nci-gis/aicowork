@@ -80,7 +80,7 @@ def translation_words(kernel):
 # ---------------- L1: shape ----------------
 
 # what to do when a folder or section added by a later kernel is missing (UPGRADING.md)
-ADDED_IN = {"10_reminders": "0.0.1-rc.4", "Reminders": "0.0.1-rc.4"}
+ADDED_IN = {"10_reminders": "0.0.1-rc.4", "Reminders": "0.0.1-rc.4", "06_logs/triage": "0.0.1-rc.6"}
 
 
 def _added(name):

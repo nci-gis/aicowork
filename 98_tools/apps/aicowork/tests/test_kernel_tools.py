@@ -1032,9 +1032,14 @@ def test_doctor_counts_due_and_overdue_reminders(inst, monkeypatch):
 
 
 def test_triage_may_file_into_reminders(inst):
-    (inst / "00_inbox" / "fri.txt").write_text("every Friday send the weekly status\n", encoding="utf-8")
-    plan = {"moves": [{"from": "00_inbox/fri.txt", "to": "10_reminders/weekly-status.md"}]}
+    (inst / "00_inbox" / "fri.md").write_text(
+        "---\ntype: reminder\nvisibility: private\ncircle: work\ndate: 2026-10-03\nrepeat: weekly\ndays: [fri]\n---\n"
+        "every Friday send the weekly status\n", encoding="utf-8")
+    plan = {"moves": [{"from": "00_inbox/fri.md", "to": "10_reminders/weekly-status.md"}]}
     assert triage.check_plan(inst, plan)
+    with pytest.raises(triage.PlanError, match="no frontmatter"):          # a raw line is not a reminder yet
+        (inst / "00_inbox" / "fri.txt").write_text("every Friday send the weekly status\n", encoding="utf-8")
+        triage.check_plan(inst, {"moves": [{"from": "00_inbox/fri.txt", "to": "10_reminders/weekly-status.md"}]})
 
 
 # ---------------- the policy is bound to the trust anchor (rc.4 red-team K) ----------------
@@ -1366,3 +1371,17 @@ def test_init_next_steps_name_the_launcher_and_the_git_identity(tmp_path, capsys
     assert "git config user.name" in out and "git config user.email" in out
     assert "./aicowork.sh doctor" in out and "aicowork.bat doctor" in out
     assert "aicowork doctor" not in out.replace("aicowork.sh doctor", "").replace("aicowork.bat doctor", "")
+
+
+def test_init_creates_every_folder_of_rebuild_section_1(tmp_path):
+    """SUITE L1-SKELETON: "every folder of REBUILD §1". A rebuild from the kernel text
+    alone (2026-10-09) made `06_logs/triage/`; `init` did not."""
+    target = tmp_path / f"s{os.getpid()}z"
+    ops.init(target, preset="personal-simple", lang="en", tools=False)
+    section_1 = (KERNEL / "REBUILD.md").read_text(encoding="utf-8").split("## 1. Folder skeleton")[1]
+    block = re.search(r"```\n(.*?)```", section_1, re.S).group(1)          # the fenced list, nothing else
+    listed = re.findall(r"(\d\d_[a-z_-]+(?:/[a-z0-9_-]+)?)/", block)
+    for d in sorted(set(listed)):
+        assert (target / d).is_dir(), d
+    assert (target / "06_logs" / "triage").is_dir()
+    assert not checks.l1_skeleton(target)

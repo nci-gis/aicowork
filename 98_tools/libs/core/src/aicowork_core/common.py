@@ -25,8 +25,8 @@ REQUIRED_BY_TYPE = {
     "reminder": ("circle", "date", "repeat", "days"),
 }
 SKELETON = ("00_inbox", "01_events", "02_emails", "03_personas", "04_projects",
-            "05_results", "06_logs/daily", "06_logs/weekly", "07_archive",
-            "08_practices", "09_decisions", "10_reminders", "99_system")   # 99_system last
+            "05_results", "06_logs/daily", "06_logs/weekly", "06_logs/triage", "07_archive",
+            "08_practices", "09_decisions", "10_reminders", "99_system")   # 99_system last; REBUILD §1's list
 # Frontmatter is checked in these folders (07_archive is retired material; 05_results
 # holds deliverables of any format; 06_logs/<reports> are tool output).
 FM_FOLDERS = ("01_events", "02_emails", "03_personas", "04_projects",

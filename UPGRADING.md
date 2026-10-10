@@ -10,7 +10,7 @@ No action is required. Three things you may want:
 2. A project you want watched gets a `watch.md` (`aicowork new watch --slug <project>`): topics, queries, cadence. The `topic-watch` task needs a host with a search tool.
 3. A service you start by hand can be registered under `apps:` with `kind: service`, its loopback `target` and a `command` (a list of words); `aicowork app <id>` starts it from your terminal. The example in `99_system/aicowork.example.yaml` shows the shape.
 
-The first triage plan creates `06_logs/triage/`; nothing to create by hand.
+Create `06_logs/triage/` (with a `.gitkeep`): REBUILD §1 lists it, so conformance L1-SKELETON checks it (the first plan would otherwise create it, but the check does not wait for that).
 
 ## 0.0.1-rc.5
 
