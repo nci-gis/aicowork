@@ -3,7 +3,7 @@
 **Date**: 2026-10-10
 **Agent**: Claude (Claude Code session)
 **Confidence**: Medium (the shape is derived from what the kernel already has; the measure is not yet run)
-**Status**: Draft — for the owner to decide, then place in `decisions/`
+**Status**: Kernel sentences written on the owner's "proceed B" (2026-10-10, CONVENTIONS "Core keys", SUITE L1-FRONTMATTER, inbox-triage); the record itself is for the owner to place in `decisions/`
 **Source**: the owner, 2026-10-10: after weeks of use, the viewer showed everything ever filed (Round 001 fixed the default), and the next gap is finding the related item; "a proof needs at least an MVP". Round 002.
 **Review-by**: when the three measured cases are run (Round 002, Check)
 
